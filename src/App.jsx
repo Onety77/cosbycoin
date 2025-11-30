@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Twitter, ArrowUpRight, Trophy, Zap, MessageCircle, Heart, Repeat, Ban, TrendingUp, AlertTriangle, X, Terminal, Power, Copy, Check } from 'lucide-react';
+import { Twitter, ArrowUpRight, Trophy, Zap, MessageCircle, Heart, Repeat, Ban, TrendingUp, AlertTriangle, X as XIcon, Terminal, Power, Copy, Check } from 'lucide-react';
 
 /* --- 1. GLOBAL STYLES & ANIMATIONS --- */
 const GlobalStyles = () => (
@@ -46,6 +46,15 @@ const GlobalStyles = () => (
     .w-drifter {
         animation: slow-drift var(--duration) linear infinite;
         will-change: transform, opacity;
+    }
+
+    /* Logo Breathing "Life" Animation */
+    @keyframes breathe-glow {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(204, 255, 0, 0.3)); }
+        50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(204, 255, 0, 0.6)); }
+    }
+    .logo-alive {
+        animation: breathe-glow 4s ease-in-out infinite;
     }
 
     /* Glitch Animation */
@@ -184,7 +193,7 @@ const SoundEngine = {
 };
 
 /* --- 3. DATA: CONTENT MANAGEMENT --- */
-
+/* --- 3. DATA: CONTENT MANAGEMENT --- */
 const MOCK_TWEETS = [
   // --- BATCH 1 ---
   {
@@ -195,7 +204,7 @@ const MOCK_TWEETS = [
     content: "Manifesting big W’s in november 🙏",
     likes: "9", retweets: "1", 
     rotation: "rotate-1",
-    url: "https://x.com/Jeremybtc" 
+    url: "https://x.com/Jeremybtc/status/1983924895927996450?s=20" 
   },
   {
     id: 2,
@@ -205,7 +214,7 @@ const MOCK_TWEETS = [
     content: "W Shadow",
     likes: "189", retweets: "11", 
     rotation: "-rotate-2",
-    url: "https://x.com/a1lon9" 
+    url: "https://x.com/a1lon9/status/1963049475858985395?s=20" 
   },
   {
     id: 3,
@@ -215,7 +224,7 @@ const MOCK_TWEETS = [
     content: "W",
     likes: "33", retweets: "13", 
     rotation: "rotate-3", highlight: true,
-    url: "https://x.com/_Shadow36" 
+    url: "https://x.com/_Shadow36/status/1991230419971273111?s=20" 
   },
   {
     id: 4,
@@ -225,7 +234,7 @@ const MOCK_TWEETS = [
     content: "Absolute w",
     likes: "117", retweets: "24", 
     rotation: "-rotate-1",
-    url: "https://x.com/_Shadow36" 
+    url: "https://x.com/_Shadow36/status/1983657988532666614?s=20" 
   },
   {
     id: 5,
@@ -235,7 +244,7 @@ const MOCK_TWEETS = [
     content: "W intern",
     likes: "21", retweets: "4", 
     rotation: "rotate-2",
-    url: "https://x.com/Dior100x" 
+    url: "https://x.com/Dior100x/status/1983623701963927984?s=20" 
   },
 
   // --- BATCH 2 ---
@@ -247,7 +256,7 @@ const MOCK_TWEETS = [
     content: "W's in the chat",
     likes: "95", retweets: "8", 
     rotation: "rotate-1",
-    url: "https://x.com/Pumpfun" 
+    url: "https://x.com/Pumpfun/status/1968806240667959415?s=20" 
   },
   {
     id: 7,
@@ -257,7 +266,7 @@ const MOCK_TWEETS = [
     content: "Major W",
     likes: "28", retweets: "2", 
     rotation: "-rotate-2",
-    url: "https://x.com/moonshot" 
+    url: "https://x.com/moonshot/status/1979269684269846813?s=20" 
   },
   {
     id: 8,
@@ -267,7 +276,7 @@ const MOCK_TWEETS = [
     content: "W",
     likes: "41", retweets: "3", 
     rotation: "rotate-3",
-    url: "https://x.com/Pumpfun" 
+    url: "https://x.com/Pumpfun/status/1969085770590794031?s=20" 
   },
   {
     id: 9,
@@ -277,7 +286,7 @@ const MOCK_TWEETS = [
     content: "big W.\n\ncongrats on the raise!",
     likes: "34", retweets: "1", 
     rotation: "-rotate-1",
-    url: "https://x.com/solana" 
+    url: "https://x.com/solana/status/1953492788353618245?s=20" 
   },
   {
     id: 10,
@@ -287,7 +296,7 @@ const MOCK_TWEETS = [
     content: "W stream ❤️",
     likes: "45", retweets: "2", 
     rotation: "rotate-2",
-    url: "https://x.com/its_braz" 
+    url: "https://x.com/its_braz/status/1992617053535326502?s=20" 
   },
   {
     id: 11,
@@ -297,9 +306,8 @@ const MOCK_TWEETS = [
     content: "W\nW\nW\nW\nW\n\nam I doing this right",
     likes: "75", retweets: "6", 
     rotation: "-rotate-3",
-    url: "https://x.com/solana" 
+    url: "https://x.com/solana/status/1955997644729540673?s=20" 
   },
- 
   {
     id: 13,
     handle: "@_Shadow36",
@@ -308,7 +316,7 @@ const MOCK_TWEETS = [
     content: "Huge W",
     likes: "56", retweets: "3", 
     rotation: "-rotate-2",
-    url: "https://x.com/_Shadow36" 
+    url: " https://x.com/_Shadow36/status/1993741950634127705?s=20 " 
   },
   {
     id: 14,
@@ -318,7 +326,7 @@ const MOCK_TWEETS = [
     content: "Fuckin W",
     likes: "108", retweets: "4", 
     rotation: "rotate-2",
-    url: "https://x.com/_Shadow36" 
+    url: " https://x.com/_Shadow36/status/1993104819092156824?s=20 " 
   }
 ];
 
@@ -446,8 +454,9 @@ const FloatingWs = () => {
       rotation: Math.random() * 360,
       opacity: Math.random() * 0.2 + 0.05,
       // CSS Variables for the animation
+      // REVERTED TO STRONGER PHYSICS FOR MAIN BACKGROUND
       duration: `${Math.random() * 40 + 60}s`,
-      dx: `${Math.random() * 200 - 100}px`,
+      dx: `${Math.random() * 200 - 100}px`, 
       dy: `${Math.random() * 200 - 100}px`,
       rot: `${Math.random() * 90 - 45}deg`
     }));
@@ -457,7 +466,8 @@ const FloatingWs = () => {
   return (
     <div 
         className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
-        style={{ transform: `translateY(${scrollY * 0.1}px)` }} // Subtle parallax drift
+        // REVERTED TO 0.1 FOR STRONGER PARALLAX ON MAIN BACKGROUND
+        style={{ transform: `translateY(${scrollY * 0.1}px)` }} 
     >
       {elements.map(el => (
         <div 
@@ -500,7 +510,7 @@ const VelocityMarquee = () => {
 
   return (
     <div className="relative w-full overflow-hidden bg-[var(--accent)] py-2 md:py-4 -rotate-2 scale-110 z-10 border-y-4 border-black mb-12">
-      <div className="whitespace-nowrap font-black font-anton text-4xl md:text-6xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
+      <div className="whitespace-nowrap font-black font-mono text-4xl md:text-6xl text-black flex items-center gap-8" style={{ transform: `translateX(${offset}px)` }}>
         {[...Array(20)].map((_, i) => (
           <span key={i} className="flex items-center gap-8">
             {phrases[i % phrases.length]} <Ban size={32} strokeWidth={4} />
@@ -511,7 +521,7 @@ const VelocityMarquee = () => {
   );
 };
 
-// Tweet Card (CUSTOM V2 - WITH PFP & ONE FONT)
+// Tweet Card (REVERTED CONTENT FONT TO MONO)
 const TweetCard = ({ tweet }) => {
     const { comments, url, rotation, isAlert, handle, highlight, code, retweets, likes, pfp } = tweet;
 
@@ -557,7 +567,7 @@ const TweetCard = ({ tweet }) => {
                 <Twitter className="w-5 h-5 text-neutral-600 group-hover:text-blue-400 transition-colors" />
             </div>
             
-            {/* CONTENT - FORCED TO FONT-MONO FOR READABILITY */}
+            {/* CONTENT - REVERTED TO FONT-MONO */}
             {code ? (
                 <div className="bg-black p-3 rounded border border-neutral-800 mb-4 font-mono text-xs text-green-400">{tweet.content}</div>
             ) : (
@@ -884,7 +894,7 @@ const App = () => {
   const [dominanceScore, setDominanceScore] = useState(0);
   const [clicks, setClicks] = useState([]);
   const [inArena, setInArena] = useState(false);
-  const [heroVisible, setHeroVisible] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(false); // Controls the button slide-in
   
   const lastScrollY = useRef(0);
   const containerRef = useRef(null);
@@ -950,9 +960,9 @@ const App = () => {
 
   const skewAmount = Math.min(Math.max(scrollVelocity * 0.2, -10), 10);
 
-  // Auto-reveal for mobile
+  // Auto-reveal for button on mount
   useEffect(() => {
-      const timer = setTimeout(() => setHeroVisible(true), 500);
+      const timer = setTimeout(() => setHeroVisible(true), 300);
       return () => clearTimeout(timer);
   }, []);
 
@@ -979,10 +989,10 @@ const App = () => {
         <div key={c.id} className={`click-w text-4xl ${c.font}`} style={{ left: c.x, top: c.y, '--rot': c.rot, color: c.color }}>W</div>
       ))}
 
-      {/* NAVIGATION */}
-      <nav className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 mix-blend-difference">
-        {/* REPLACED: TEXT 'W' WITH LOGO IMAGE */}
-        <div className="hover:scale-110 transition-transform cursor-pointer">
+      {/* NAVIGATION - CHANGED TO ABSOLUTE SO IT SCROLLS AWAY */}
+      <nav className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+        {/* REPLACED: TEXT 'W' WITH LOGO IMAGE & "ALIVE" ANIMATION */}
+        <div className="logo-alive transition-transform cursor-pointer">
             <img 
                 src="/logo.png" 
                 alt="Project W Logo" 
@@ -1033,18 +1043,20 @@ const App = () => {
             Not a project. A state of being. The ticker is $W. The vibe is absolute victory. Welcome to the winner's circle.
           </p>
 
-          <button 
-            className="group relative px-12 py-6 bg-white text-black font-black text-2xl uppercase tracking-tighter overflow-hidden border-2 border-white hover:border-[var(--accent)] transition-colors"
-            onClick={(e) => {
-                e.stopPropagation(); // NO SOUND
-                setInArena(true);
-            }}
-          >
-            {/* REMOVED MIX-BLEND-DIFFERENCE TO FIX VISIBILITY ON WHITE */}
-            {/* Added animate-pulse for mobile attention if not hovered */}
-            <span className="relative z-10 group-hover:text-[var(--accent)] text-black transition-colors block md:inline">Enter The Arena</span>
-            <div className="absolute inset-0 bg-black translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
-          </button>
+          {/* BUTTON FIX: ACID GREEN BG + BLACK TEXT + SLIDE UP REVEAL */}
+          <div className={`transition-all duration-1000 ease-out transform ${heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
+              <button 
+                className="group relative px-12 py-6 bg-[var(--accent)] text-black font-black text-2xl uppercase tracking-tighter overflow-hidden border-2 border-[var(--accent)] hover:border-white transition-all shadow-[0_0_20px_rgba(204,255,0,0.4)] hover:shadow-[0_0_40px_rgba(204,255,0,0.8)]"
+                onClick={(e) => {
+                    e.stopPropagation(); // NO SOUND
+                    setInArena(true);
+                }}
+              >
+                <span className="relative z-10">Enter The Arena</span>
+                {/* Optional: darker green swipe on hover */}
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+              </button>
+          </div>
         </div>
       </section>
 
@@ -1054,7 +1066,7 @@ const App = () => {
       <section className="relative z-20 pb-24 px-4 md:px-12 bg-black/50 backdrop-blur-sm">
         
         <div className="mb-24 text-center">
-          <h2 className="text-6xl md:text-8xl font-gothic text-white mb-4 transform -rotate-2 select-none">THE FEED</h2>
+          <h2 className="text-6xl md:text-8xl font-anton text-white mb-4 transform -rotate-2 select-none">THE FEED</h2>
           <div className="w-24 h-2 bg-[var(--accent)] mx-auto animate-pulse" />
         </div>
 
@@ -1086,7 +1098,8 @@ const App = () => {
         <div className="absolute inset-0 opacity-10">
            {Array.from({length: 10}).map((_, i) => (
              <div key={i} className="absolute text-9xl font-black" style={{ 
-               top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`, transform: `rotate(${Math.random() * 360}deg)`
+               top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`, 
+               transform: `rotate(${Math.random() * 360}deg) translateY(${scrollVelocity * 0.05}px)` 
              }}>W</div>
            ))}
         </div>
@@ -1095,8 +1108,9 @@ const App = () => {
           <div>
             <h2 className="text-9xl font-black font-anton leading-none tracking-tighter mb-4 select-none">KEEP<br/>WINNING</h2>
             <div className="flex gap-4 font-mono text-sm uppercase font-bold tracking-widest">
-              <a href="#" className="hover:underline decoration-4">Twitter</a>
-              <a href="#" className="hover:underline decoration-4">Dexscreener</a>
+              <a href="#" className="hover:underline decoration-4">X</a>
+              <a href="#" className="hover:underline decoration-4">Community</a>
+              <a href="#" className="hover:underline decoration-4">Chart</a>
             </div>
           </div>
           
