@@ -3,7 +3,7 @@ import { Twitter, ArrowUpRight, Trophy, Zap, MessageCircle, Heart, Repeat, Ban, 
 
 /* --- 1. CONFIGURATION --- */
 // PASTE YOUR TOKEN CONTRACT ADDRESS HERE TO SEE LIVE DATA
-const TOKEN_CA = "A9E2AopuG56LWYiXsvGLLTcLjUjQ539PY6k5Fhfepump"; 
+const TOKEN_CA = "Coming Soon..."; 
 
 /* --- 2. MASTER STYLES (GOD MODE) --- */
 const GlobalStyles = () => (
