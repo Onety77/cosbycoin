@@ -108,49 +108,44 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the Sacred Architect of the Rainbow Fish Cult ($RFC). You are creating a professional, hand-painted character illustration.
+      const prompt = `You already have access to fish.jpg, the original illustrated Rainbow Fish image.
+Use it as the fixed template for all outputs.
 
-REFERENCE IMAGES:
+TASK
 
-Image 1 (fish.jpg): The BLANK RITUAL MANNEQUIN. Use this for the absolute ANATOMY, FORM, and ART STYLE. Treat the face of this fish as an empty, featureless canvas.
+Transform a user-uploaded image by modifying ONLY the head and face of the existing Rainbow Fish template.
 
-Image 2 (User PFP): The source of truth for FACIAL IDENTITY, ACCESSORIES, and VIBE.
+CONSTANTS – DO NOT CHANGE
 
-MISSION: > Perform a professional head-transmutation. You are "dressing" the blank fish mannequin with the soul and likeness of the character in Image 2.
+The fish body, fins, tail, and scale layout from fish.jpg must stay exactly as they are.
 
-STEP-BY-STEP RITUAL:
+The template background must remain pure black (#000000).
 
-THE BLANK BASE: Use the exact body, fins, and overall head-silhouette of the fish from Image 1. IGNORE any existing eyes or nose on the fish; you are drawing the character's face over a blank surface.
+VARIABLES – HEAD/FACE ONLY
 
-FACIAL RECONSTRUCTION:
+Redraw the person’s facial likeness onto the fish face area:
 
-Map the eyes, nose, and mouth of the person in Image 2 directly onto the fish's facial area.
+Paint the eyes, nose shape, and expression so the subject is recognizable at first glance.
 
-REDRAW the person's features from scratch using the hand-painted, digital-sketch brushwork seen in Image 1.
+Use the same watercolor / digital-paint brush texture as fish.jpg.
 
-DO NOT use photo-collage or realistic cutouts. The face must look like it was painted as part of the fish.
+Never paste real photo parts. The face must look painted as part of the fish.
 
-Recolor the character's skin to the iridescent magenta/cyan paint texture of the fish.
+Recolor the skin of the redrawn face to match the Rainbow Fish head tones (blue/purple/cyan texture).
 
-Apply the signature vibrant yellow/gold lipstick from the cult lore.
+Keep the mouth as the signature yellow pout lips from fish.jpg, regardless of subject color.
 
-ACCESSORY ASCENSION:
+ACCESSORIES
 
-If the person is wearing a hat, glasses, or jewelry, redraw them onto the fish's head/body in the same sketchy, artsy style.
+If the upload shows a hat, glasses, or jewelry, redraw those onto the fish head in the illustrated style.
 
-If they have distinct hair, interpret it as bioluminescent flowing paint strokes.
+Interpret hair as flowing painted strokes, not realistic strands.
 
-ART STYLE ENFORCEMENT: >    * ZERO REALISM. Every line must look like a visible, "scribbly" digital-paint stroke.
+OUTPUT
 
-The final output must be 100% consistent with the hand-drawn aesthetic of Image 1.
+Produce one image.
 
-THE VOID BACKGROUND: >    * The background must be PURE ABYSSAL BLACK (#000000).
-
-Add subtle, glowing bio-spores and faint iridescent coral sketches.
-
-ABSOLUTELY NO WHITE OR EMPTY BACKGROUNDS.
-
-FINAL CHECK: The resulting image must be a 100% fish-shaped deity that clearly possesses the unique facial identity and accessories of the person from Image 2.
+Style: 100% illustrated, zero realism, face area only edited, body untouched
 `;
 
       const payload = {
