@@ -108,55 +108,57 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You already possess fish.jpg, the illustrated Rainbow Fish template.
+      const prompt = `You are the Sacred Architect of the Rainbow Fish Cult ($RFC). You are performing a structural molecular transmutation.
 
-CORE PRINCIPLE
+REFERENCE IMAGES:
 
-The fish head silhouette from fish.jpg is LOCKED and must serve as the ONLY outer outline.
+Image 1 (fish.jpg): The MEDIUM & ANATOMY SOURCE. This provides the sketchy brushwork, the magenta/cyan skin texture, and the lower body form.
 
-You must NEVER draw a new face outline or border inside the fish head.
+Image 2 (User PFP): The STRUCTURAL SOURCE. This provides the skull shape, jawline, facial features, and accessories.
 
-TASK
+MISSION: > Morph the fish's head structure to match the character's head structure. The character's face is NOT inside the fish; the character's face IS the fish.
 
-Paint a new face onto the fish template that reflects the uploaded subject.
+STEP-BY-STEP RITUAL:
 
-HOW TO PAINT THE HEAD
+STRUCTURAL MORPHING (NO DOUBLE OUTLINES):
 
-Use the existing fish head surface as blank canvas.
+DISSOLVE the original head-outline of the fish.
 
-Redraw the subject’s eyes, nose form, and expression directly in the watercolor paint-stroke medium of fish.jpg.
+RECONSTRUCT the fish's head silhouette to perfectly match the jawline, chin, and skull shape of the character in Image 2.
 
-Recolor all redrawn skin to the blue/purple/cyan watercolor texture sampled from the fish head in fish.jpg.
+If the character has a hat or specific hair, the fish's head structure must expand or change to become that hat or hair.
 
-Blend the new skin paint gradually into the surrounding fish-head texture so there is no visible layer separation.
+CRITICAL: There must be only ONE boundary. The character's facial contour becomes the edge of the fish.
 
-Mouth must appear as bright yellow pout lips consistent with fish.jpg while matching subject expression.
+TEXTURE CONTINUITY (THE SEAMLESS SKIN):
 
-ACCESSORIES TRANSFER
+The "skin" of the character's face must be rendered with the EXACT magenta/cyan sketchy texture found on the fish's body in Image 1.
 
-If subject wears hat/glasses/jewelry → redraw them on the fish head in same brush medium.
+There must be zero transition or "seam" where the face meets the neck. The messy, hand-painted digital strokes must flow uninterrupted from the character's cheeks down to the fish's scales.
 
-Hair → interpret as flowing painted strokes.
+MEDIUM ENFORCEMENT (THE SCRATCHY STROKE):
 
-ABSOLUTE CONSTANTS
+FORBIDDEN: Smooth gradients, realistic skin, or photo-style lighting.
 
-Fish body, fins, tail, and scale layout → remain EXACT pixels from fish.jpg.
+MANDATORY: Every feature (eyes, nose, mouth, accessories) must be drawn using the "scratchy," visible, hand-painted digital brushstrokes seen in Image 1.
 
-Background → remain pure black (#000000).
+The character's features should look like they were "etched" out of the magenta paint.
 
-FORBIDDEN
+COLOR & VIBE:
 
-No realism
+Maintain the character's identity (the eyes, nose, and mouth must be unmistakable).
 
-No photo collage
+Recolor everything to the $RFC palette: Magenta, Cyan, and the signature Gold/Yellow lips.
 
-No new outlines, borders, or internal face edges
+THE VOID BACKGROUND:
 
-No body edits outside head
+Set the character in a PURE ABYSSAL BLACK (#000000) void.
 
-OUTPUT
+Add subtle bioluminescent bubble trails and sketchy iridescent coral outlines.
 
-Produce one fully illustrated image: recognizable likeness fused into the single Rainbow Fish template using identical stroke medium.
+ABSOLUTELY NO WHITE OR EMPTY BACKGROUNDS.
+
+FINAL CHECK: Look at the edge of the face. Does it look like an overlay? If yes, you failed. It must look like the fish's flesh has naturally formed into the shape of the character's head, sharing one single, crispy, sketchy boundary.
 `;
 
       const payload = {
