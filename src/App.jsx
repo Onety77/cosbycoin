@@ -108,49 +108,37 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the Sacred Architect of the Rainbow Fish Cult ($RFC). You are creating a professional, hand-painted character illustration.
+      const prompt = `You already have fish.jpg, the illustrated Rainbow Fish template.
 
-REFERENCE IMAGES:
+TASK
 
-Image 1 (fish.jpg): The BLANK RITUAL MANNEQUIN. Use this for the absolute ANATOMY, FORM, and ART STYLE. Treat the face and head of this fish as an empty, featureless, and mouthless canvas.
+Modify only the head and face region of the template by painting a new face from scratch that reflects the likeness and expression of the uploaded subject.
 
-Image 2 (User PFP): The source of truth for FACIAL IDENTITY, ACCESSORIES, and VIBE.
+SILHOUETTE ENFORCEMENT
 
-MISSION: > Perform a professional head-transmutation. You are "birthing" the character's soul out of the blank fish mannequin. The face must not look like a mask; it must be the fish's own flesh.
+The outer shape of the fish head must stay identical to fish.jpg.
 
-STEP-BY-STEP RITUAL:
+Never create a visible outline or “edge of a pasted face.”
 
-THE BLANK BASE: Use the exact body, fins, and overall head-silhouette of the fish from Image 1. The face area is a completely blank void waiting for features.
+PAINTING METHOD
 
-ORGANIC FACIAL BLENDING:
+Draw the face directly onto the existing fish surface using the same watercolor / digital-paint texture as fish.jpg.
 
-Map the eyes, nose, and mouth of the person in Image 2 onto the fish's face.
+Recolor the redrawn skin to match the template head tones (blue/purple/cyan paint diffusion).
 
-SEAMLESS TRANSITION: There must be NO visible border or outline between the character's face and the fish's head. The "crispy," textured magenta/cyan skin of the fish body must extend organically into the character's face.
+Let the paint of the new skin extend naturally until it meets the original crispy edge of the fish illustration, so the subject’s face feels fused into the fish material.
 
-REDRAW the person's features from scratch using the hand-painted, digital-sketch brushwork. The facial features should emerge from the magenta paint texture as if they were sculpted from the same material.
+MOUTH RULE
 
-DO NOT use photo-collage or realistic cutouts. The transition must be a smooth, painterly blend where the character's identity and the fish's anatomy become one single organism.
+mouth color should be yellow with rough black stroke edge, regardless of how the character's mouth color is. same art style as the fish.
 
-Apply the signature vibrant yellow/gold lipstick color to the newly formed mouth, ensuring it fits the character's lip shape but matches the cult's color palette.
+ACCESSORIES
 
-ACCESSORY ASCENSION:
+Redraw hats, glasses, and jewelry onto the fish head in the illustrated texture.
 
-If the person is wearing a hat, glasses, or jewelry, redraw them onto the fish's head/body in the same sketchy, artsy style.
+NEVER
 
-Accessories should also "blend" into the fish's anatomy (e.g., glasses arms disappearing into scales).
-
-ART STYLE ENFORCEMENT: >    * ZERO REALISM. Every line must look like a visible, "scribbly" digital-paint stroke.
-
-The final output must be 100% consistent with the hand-drawn aesthetic of Image 1.
-
-THE VOID BACKGROUND: >    * The background must be PURE ABYSSAL BLACK (#000000).
-
-Add subtle, glowing bio-spores and faint iridescent coral sketches.
-
-ABSOLUTELY NO WHITE OR EMPTY BACKGROUNDS.
-
-FINAL CHECK: The resulting image must be a 100% fish-shaped deity where the character's face is professionally integrated into the head. The transition must be flawless, with the fish's skin texture flowing perfectly into the character's recognizable facial identity.
+No realism, no photo collage, no added borders, no body edits.
 `;
 
       const payload = {
