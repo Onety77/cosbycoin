@@ -108,65 +108,59 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You already have access to fish.jpg, the illustrated Rainbow Fish template.
-Use it as the only source of anatomy, head shape, brush texture, and stroke medium.
+      const prompt = `You are the Sacred Tailor of the Rainbow Fish Cult ($RFC).
 
-TASK
+REFERENCE IMAGES:
 
-For every user-uploaded image, edit ONLY the head area of the Rainbow Fish template using FEATURE-ONLY transfer.
+Image 1 (fish.jpg): The SACRED BASE MODEL. Use this for the absolute ANATOMY, POSE, and ART STYLE.
 
-CRITICAL PRINCIPLE – NO GUESSING
+Image 2 (User PFP): The AESTHETIC SOURCE. Use this for the eyes, hair, headwear, and clothing patterns/colors.
 
-The uploaded image is the sole truth for what exists on the head.
+MISSION: > Decorate the fish from Image 1 using the visual identity of the character in Image 2. The fish must remain in its original swimming posture.
 
-You must observe first, then redraw.
+STEP-BY-STEP RITUAL:
 
-NEVER assume the subject is a human or what features they have.
+EYE TRANSPLANT:
 
-TRANSFER PROCESS
+Replace the fish's eyes from Image 1 with the exact eyes (shape, iris color, expression) of the character in Image 2.
 
-Identify from the upload whatever visual elements are used as:
+Redraw these eyes using the "sketchy," hand-painted digital medium of the fish.
 
-eyes / gaze objects
+Keep the fish's original head shape and its signature yellow/gold lips.
 
-nose or central face mark
+HEADWEAR & HAIR INTEGRATION:
 
-mouth or expression mark
-(These may be realistic, illustrated, or stylized depending on the upload.)
+If the character in Image 2 has a hat, crown, or hair, draw a version of it onto the fish's head.
 
-Redraw those elements from scratch inside the fish head using the same watercolor / digital-paint stroke behavior of fish.jpg.
+The accessory must follow the curve of the fish's head and fins organically. It should look like the fish is "wearing" it.
 
-Recolor the surrounding head surface to the blue/purple/cyan watercolor texture of the fish template.
+THE AESTHETIC WRAP (CLOTHING):
 
-Blend all new paint smoothly into the existing fish-head texture so there is no visible overlay, collage, or internal face border.
+DO NOT make the fish stand up or wear the shirt like a human.
 
-ACCESSORY / HAIR / HEAD ITEMS
+IGNORE LOWER BODY: Absolutely ignore any trousers, pants, shorts, or shoes present in Image 2. These have no place in the shoal.
 
-If the upload shows any head item — cap, halo, antenna, ribbons, anime hair, cartoon shapes, masks — redraw that exact item onto the fish head in the template brush medium.
+Instead, apply the colors, patterns, and textures of the character's shirt/dress as a "Sacred Wrap" or "Custom Skin" onto the fish's front belly and side-body area.
 
-If an element is NOT visible in the upload (ears, jawline, extra borders) → do not draw it.
+The "Shirt-Skin" must follow the fish's natural curved posture PROFESSIONALLY, fitting and covering the fish body perfectly like a tailored second skin.
 
-CONSTANTS – UNTOUCHED
+If the character wears a suit, the fish's scales in that area should adopt the texture and color of the suit fabric, respecting the fish's natural curved posture.
 
-Fish body, fins, tail, scales → remain EXACT pixels from fish.jpg.
+MEDIUM & TEXTURE ENFORCEMENT:
 
-Background → remain pure black (#000000).
+FORBIDDEN: Realistic skin, photo-filters, or smooth 3D rendering.
 
-FORBIDDEN
+MANDATORY: Everything must be rendered in the "messy," textured, hand-drawn digital paint style of Image 1.
 
-No realism
+The final image must look like a professional, hand-painted concept art piece.
 
-No photo collage
+THE ABYSSAL BACKGROUND:
 
-No second outlines
+Set the fish in a PURE ABYSSAL BLACK (#000000) void.
 
-No features invented beyond what was observed in the upload.
+Add subtle bioluminescent glowing spores and faint, sketchy iridescent bubble trails.
 
-OUTPUT
-
-Produce one 100% illustrated image.
-
-The likeness must reflect the upload exactly as perceived, regardless of whether the subject is anime, manga, movie, cartoon, abstract drawing, or any other form.
+FINAL CHECK: Does the fish look like it’s wearing a "skin" based on the person? Is the fish's original swimming pose preserved? Have trousers and shoes been correctly ignored? If the AI forced the fish to stand up or gave it a human nose, the ritual has failed.
 `;
 
       const payload = {
