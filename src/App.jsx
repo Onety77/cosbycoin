@@ -108,47 +108,45 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the Sacred Architect of the Rainbow Fish Cult ($RFC). You are performing a structural molecular transmutation.
+      const prompt = `You are the Sacred Architect of the Rainbow Fish Cult ($RFC). You are performing a professional character hybridization.
 
 REFERENCE IMAGES:
 
-Image 1 (fish.jpg): The MEDIUM & ANATOMY SOURCE. This provides the sketchy brushwork, the magenta/cyan skin texture, and the lower body form.
+Image 1 (fish.jpg): The PRIMARY ANATOMICAL BASE. Use this for the absolute head shape, body silhouette, magenta/cyan sketchy texture, and art medium.
 
-Image 2 (User PFP): The STRUCTURAL SOURCE. This provides the skull shape, jawline, facial features, and accessories.
+Image 2 (User PFP): The IDENTITY SOURCE. Use this only for the eyes, nose, mouth, and accessories (hair/hats).
 
-MISSION: > Morph the fish's head structure to match the character's head structure. The character's face is NOT inside the fish; the character's face IS the fish.
+MISSION: > Use the fish from Image 1 as a solid mannequin. Map the character's features onto the fish's face without changing the fish's original head silhouette.
 
 STEP-BY-STEP RITUAL:
 
-STRUCTURAL MORPHING (NO DOUBLE OUTLINES):
+ANATOMICAL PRESERVATION (FISH SILHOUETTE):
 
-DISSOLVE the original head-outline of the fish.
+RETAIN the exact head shape and outer boundary of the fish from Image 1. Do not morph the jawline or skull to match the person; the person's spirit must inhabit the fish's existing form.
 
-RECONSTRUCT the fish's head silhouette to perfectly match the jawline, chin, and skull shape of the character in Image 2.
+NO EARS: Do not draw human ears. The edge of the face must remain the clean, sketchy boundary of the fish's head.
 
-If the character has a hat or specific hair, the fish's head structure must expand or change to become that hat or hair.
+FEATURE MAPPING (EYES, NOSE, MOUTH):
 
-CRITICAL: There must be only ONE boundary. The character's facial contour becomes the edge of the fish.
+TRANSFER only the eyes, nose, and mouth from Image 2 onto the fish's face area.
 
-TEXTURE CONTINUITY (THE SEAMLESS SKIN):
+REDRAW these features from scratch using the visible, scratchy, hand-painted digital brushstrokes of Image 1.
 
-The "skin" of the character's face must be rendered with the EXACT magenta/cyan sketchy texture found on the fish's body in Image 1.
+The facial features must emerge naturally from the magenta/cyan paint texture.
 
-There must be zero transition or "seam" where the face meets the neck. The messy, hand-painted digital strokes must flow uninterrupted from the character's cheeks down to the fish's scales.
+Apply the signature vibrant yellow/gold lipstick to the mouth.
 
-MEDIUM ENFORCEMENT (THE SCRATCHY STROKE):
+SEAMLESS ACCESSORY INTEGRATION (HAIR & CAPS):
+
+If the character in Image 2 has hair or a cap/hat, integrate it seamlessly onto the top of the fish's head.
+
+The hair or cap should not look like an overlay; it must look like it was painted as part of the fish's anatomy, following the curves of its head.
+
+MEDIUM & TEXTURE ENFORCEMENT:
 
 FORBIDDEN: Smooth gradients, realistic skin, or photo-style lighting.
 
-MANDATORY: Every feature (eyes, nose, mouth, accessories) must be drawn using the "scratchy," visible, hand-painted digital brushstrokes seen in Image 1.
-
-The character's features should look like they were "etched" out of the magenta paint.
-
-COLOR & VIBE:
-
-Maintain the character's identity (the eyes, nose, and mouth must be unmistakable).
-
-Recolor everything to the $RFC palette: Magenta, Cyan, and the signature Gold/Yellow lips.
+MANDATORY: The entire face must share the same "messy," textured, iridescent paint medium as the fish's body. There should be no visible "cutout" lines around the facial features.
 
 THE VOID BACKGROUND:
 
@@ -158,7 +156,7 @@ Add subtle bioluminescent bubble trails and sketchy iridescent coral outlines.
 
 ABSOLUTELY NO WHITE OR EMPTY BACKGROUNDS.
 
-FINAL CHECK: Look at the edge of the face. Does it look like an overlay? If yes, you failed. It must look like the fish's flesh has naturally formed into the shape of the character's head, sharing one single, crispy, sketchy boundary.
+FINAL CHECK: The result should be the fish from Image 1, but its face now possesses the unmistakable eyes, nose, and mouth of the person, and it is wearing the person's hair or hat. The transition must be painterly and professional.
 `;
 
       const payload = {
