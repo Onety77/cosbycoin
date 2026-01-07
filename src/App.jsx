@@ -500,10 +500,10 @@ STYLE: The final image must be a single, unified hand-painted illustration. No p
             <a 
               href={processedImage} 
               download="rfc-ascended-deity.png"
-              className="glass-btn px-20 py-8 text-white bg-white font-title text-4xl hover:bg-cyan-400 transition-all shadow-[0_0_80px_rgba(34,211,238,0.3)]"
-              style={{ borderRadius: '60px 20px' }}
+              className="glass-btn px-15 py-6 text-white bg-white font-title text-2.5xl hover:bg-cyan-400 transition-all shadow-[0_0_80px_rgba(34,211,238,0.3)]"
+              style={{ borderRadius: '45px 15px' }}
             >
-              <Download className="w-10 h-10 text-white inline mr-4" /> CLAIM THE GLOW
+              <Download className="w-6 h-6 text-white inline mr-4" /> CLAIM THE GLOW
             </a>
           </div>
         </div>
