@@ -106,20 +106,18 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the master artist of the Rainbow Fish Cult ($RFC). 
-      TASK: Perform a professional artistic fusion ritual.
+      const prompt = `You are the Sacred Grandmaster of the Rainbow Fish Cult ($RFC). 
+      TASK: Perform a professional artistic transmutation. 
       
-      CORE MANDATES:
-      1. HEAD HYBRIDIZATION: Replace the fish's head in fish.jpg with the person's head from the uploaded pfp. 
-      2. FACE PRESERVATION: The person's face must be 100% recognizable (e.g., if it's Trump, it must look exactly like him). Keep all facial structures, expressions, and accessories like hats, glasses, or hair styles exactly as they appear in the original pfp.
-      3. CULT MAKEUP: Apply the "Sacred Mask" to the person's face:
-         - Recolor their skin to the specific purple/blue hues found on the fish's face in fish.jpg.
-         - Apply the specific vibrant yellow/gold lipstick to their lips.
-         - Match the iridescent shimmering highlights around the eyes.
-      4. BODY RETENTION: The rest of the body (neck down) must remain exactly as the fish in fish.jpg (the fins, tail, and body shape).
-      5. ART STYLE: Every pixel must conform to the hand-drawn, sketchy, textured digital art style of fish.jpg. Nothing should look realistic or like a photo-filter. It must look like a professional character illustration.
+      CRITICAL MANDATES:
+      1. ANATOMICAL FUSION: Replace the head of the fish in fish.jpg with the head of the character in the pfp. DO NOT just cutout the face. You must morph, squeeze, and PROFESSIONALLY FIT the character's facial features into the specific head-shape and scale-lines of the fish. The transition between the character's face and the fish's neck/scales must be seamless.
+      2. IDENTITY: The character's face must remain perfectly recognizable. If the character wears a hat, glasses, or has specific hair, those MUST be professionally redrawn onto the fish's head in the same sketchy art style.
+      3. ART STYLE: Everything must be in the EXACT hand-drawn, digital-sketch, textured art style of fish.jpg. NO realistic textures. NO photo-collage effects. NO realistic skin. The skin of the character must become the purple/blue artistic paint texture from the fish's face. 
+      4. CULT MAKEUP: Apply the sacred purple face-base, the specific vibrant yellow/gold lipstick, and the iridescent eyes from the fish.jpg onto the character's face.
+      5. BACKGROUND: Set the character in a PURE DEEP ABYSSAL BLACK environment. Add bioluminescent glowing particles, bubbles, and subtle magenta/cyan coral sketches. DO NOT use a white or empty background.
+      6. POSITION: The character must be centered in the frame.
       
-      BLEND the user's face professionally into the fish anatomy while keeping their identity unmistakable.`;
+      The result must look like a professional, hand-painted character illustration from a cult-themed artsy project. NO REALISM.`;
 
       const payload = {
         contents: [{
