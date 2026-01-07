@@ -18,7 +18,20 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-const apiKey = ""; // Environment handles this
+// Using the provided API key logic for Vercel/Environment compatibility
+const apiKey = (() => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_GEMINI) return import.meta.env.VITE_APP_GEMINI;
+  } catch (e) {}
+  try {
+    if (typeof process !== 'undefined' && process.env?.VITE_APP_GEMINI) return process.env.VITE_APP_GEMINI;
+  } catch (e) {}
+  try {
+    if (typeof window !== 'undefined' && window.VITE_APP_GEMINI) return window.VITE_APP_GEMINI;
+  } catch (e) {}
+  return typeof __apiKey !== 'undefined' ? __apiKey : "";
+})();
+
 const CONTRACT_ADDRESS = "0x789...RFC...BEYOND_THE_VOID";
 
 const App = () => {
@@ -33,70 +46,93 @@ const App = () => {
 
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+  // Helper to fetch local reference image and convert to base64
+  const getBase64FromUrl = async (url) => {
+    const data = await fetch(url);
+    const blob = await data.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob); 
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    });
+  };
+
   const fishifyImage = async (base64Data) => {
     setIsProcessing(true);
     setError(null);
     
-    const prompt = `Hand-crafted, artsy fishification of this pfp for the Rainbow Fish Cult ($RFC). 
-    Transform the subject into a shimmering, iridescent aquatic deity. 
-    Use messy, artistic paint-stroke textures, flowing translucent rainbow fins, and sparkling scales. 
-    Maintain a high-fashion, avant-garde, "cult-like" aesthetic. 
-    Make it look like a unique digital painting with bioluminescent colors.`;
+    try {
+      // Fetch the sacred reference fish image
+      const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
+      
+      const prompt = `You are the master artist of the Rainbow Fish Cult ($RFC). 
+      Use the provided reference fish image (the one with iridescent scales and vibrant colors) as the absolute source of truth for style, color palette, and textures.
+      Transform the provided person's profile picture into a shimmering, artsy, cult-like deity. 
+      Integrate the specific rainbow scales, translucent fins, and bioluminescent glow from the reference fish onto the person. 
+      The result should be a high-fashion, avant-garde digital painting. 
+      Make it look hand-crafted and unique.`;
 
-    const payload = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { 
-              inlineData: { 
-                mimeType: "image/png", 
-                data: base64Data.split(',')[1] 
-              } 
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE']
-      }
-    };
-
-    let retries = 5;
-    let delay = 1000;
-
-    while (retries > 0) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
+      const payload = {
+        contents: [
           {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            parts: [
+              { text: prompt },
+              { 
+                inlineData: { 
+                  mimeType: "image/jpeg", 
+                  data: referenceFishBase64 // The reference fish
+                } 
+              },
+              { 
+                inlineData: { 
+                  mimeType: "image/png", 
+                  data: base64Data.split(',')[1] // The user pfp
+                } 
+              }
+            ]
           }
-        );
-
-        if (!response.ok) throw new Error('API failed');
-        const result = await response.json();
-        const generatedBase64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-        if (generatedBase64) {
-          setProcessedImage(`data:image/png;base64,${generatedBase64}`);
-          setIsProcessing(false);
-          return;
-        } else {
-          throw new Error('No image returned');
+        ],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE']
         }
-      } catch (err) {
-        retries--;
-        if (retries === 0) {
-          setError("The cosmic current is too strong. Try again.");
-          setIsProcessing(false);
-          break;
+      };
+
+      let retries = 5;
+      let delay = 1000;
+
+      while (retries > 0) {
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }
+          );
+
+          if (!response.ok) throw new Error('API failed');
+          const result = await response.json();
+          const generatedBase64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+          if (generatedBase64) {
+            setProcessedImage(`data:image/png;base64,${generatedBase64}`);
+            setIsProcessing(false);
+            return;
+          } else {
+            throw new Error('No image returned');
+          }
+        } catch (err) {
+          retries--;
+          if (retries === 0) throw err;
+          await sleep(delay);
+          delay *= 2;
         }
-        await sleep(delay);
-        delay *= 2;
       }
+    } catch (err) {
+      console.error(err);
+      setError("The cosmic current is too strong or the API key is missing. Try again later.");
+      setIsProcessing(false);
     }
   };
 
@@ -375,7 +411,7 @@ const App = () => {
             </div>
             
             <button 
-              onClick={() => setShowLore(false)}
+              onClick={() => setShowLore(true)}
               className="mt-12 w-full py-6 bg-white text-black font-black uppercase tracking-widest text-xl hover:bg-pink-400 transition-colors rotate-1"
             >
               I AM READY TO GLOW
