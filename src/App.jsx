@@ -108,18 +108,20 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the Sacred Grandmaster of the Rainbow Fish Cult ($RFC). 
-      TASK: Perform a professional artistic transmutation. 
-      
-      CRITICAL MANDATES:
-      1. ANATOMICAL FUSION: Replace the head of the fish in fish.jpg with the head of the character in the pfp. DO NOT just cutout the face. You must morph, squeeze, and PROFESSIONALLY FIT the character's facial features into the specific head-shape and scale-lines of the fish. The transition between the character's face and the fish's neck/scales must be seamless.
-      2. IDENTITY: The character's face must remain perfectly recognizable. If the character wears a hat, glasses, or has specific hair, those MUST be professionally redrawn onto the fish's head in the same sketchy art style.
-      3. ART STYLE: Everything must be in the EXACT hand-drawn, digital-sketch, textured art style of fish.jpg. NO realistic textures. NO photo-collage effects. NO realistic skin. The skin of the character must become the purple/blue artistic paint texture from the fish's face. 
-      4. CULT MAKEUP: Apply the sacred purple face-base, the specific vibrant yellow/gold lipstick, and the iridescent eyes from the fish.jpg onto the character's face.
-      5. BACKGROUND: Set the character in a PURE DEEP ABYSSAL BLACK environment. Add bioluminescent glowing particles, bubbles, and subtle magenta/cyan coral sketches. DO NOT use a white or empty background.
-      6. POSITION: The character must be centered in the frame.
-      
-      The result must look like a professional, hand-painted character illustration from a cult-themed artsy project. NO REALISM.`;
+      const prompt = `You are the Sacred Grandmaster of the Rainbow Fish Cult ($RFC).
+
+START with the base image of the fish from fish.jpg. Do not alter its head shape, body form, or iridescent magenta/cyan scale pattern.
+
+ACCESSORY ASCENSION: Identify any headwear (hats, crowns, bandanas), or glasses from the uploaded profile picture. Redraw these items directly onto the head and body of the fish in the exact same hand-painted, sketchy art style of fish.jpg. 
+
+FACIAL ESSENCE: Identify the key facial features (eye shape, nose type, mouth) of the person. Subtly redraw the fish's eyes and mouth to mimic these features while keeping the fish's original facial structure and vibrant pink lips.
+
+VIBE: Transfer the person's vibe (cool, intense, happy) to the fish's expression.
+
+BACKGROUND: A deep abyssal black void with bioluminescent glowing particles and subtle coral sketches.
+
+STYLE: The final image must be a single, unified hand-painted illustration. No photo cutouts.
+`;
 
       const payload = {
         contents: [{
@@ -498,10 +500,10 @@ const App = () => {
             <a 
               href={processedImage} 
               download="rfc-ascended-deity.png"
-              className="glass-btn px-20 py-8 text-black bg-white font-title text-4xl hover:bg-cyan-400 transition-all shadow-[0_0_80px_rgba(34,211,238,0.3)]"
+              className="glass-btn px-20 py-8 text-white bg-white font-title text-4xl hover:bg-cyan-400 transition-all shadow-[0_0_80px_rgba(34,211,238,0.3)]"
               style={{ borderRadius: '60px 20px' }}
             >
-              <Download className="w-10 h-10 inline mr-4" /> CLAIM THE GLOW
+              <Download className="w-10 h-10 text-white inline mr-4" /> CLAIM THE GLOW
             </a>
           </div>
         </div>
