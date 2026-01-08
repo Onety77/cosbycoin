@@ -34,7 +34,7 @@ const apiKey = (() => {
   return typeof __apiKey !== 'undefined' ? __apiKey : "";
 })();
 
-const CONTRACT_ADDRESS = "0x789...RFC...BEYOND_THE_VOID";
+const CONTRACT_ADDRESS = "9KY6bE1eHCb1Dz6ptL8u7wFtHBqAcjAvvuSxmP6gpump";
 
 const App = () => {
   const [image, setImage] = useState(null);
