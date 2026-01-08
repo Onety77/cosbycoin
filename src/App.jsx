@@ -159,82 +159,39 @@ const App = () => {
     try {
       const referenceFishBase64 = await getBase64FromUrl('fish.jpg');
       
-      const prompt = `You are the Sacred Tailor of the Rainbow Fish Cult ($RFC).
-
+      const prompt = `You are the Lead Artist of the Rainbow Fish Cult ($RFC).
 
 REFERENCE IMAGES:
-
-
-Image 1 (fish.jpg): The SACRED BASE MODEL. Use this for the absolute ANATOMY, POSE, and ART STYLE.
-
-
-Image 2 (User PFP): The AESTHETIC SOURCE. Use this for the eyes, hair, headwear, and clothing patterns/colors.
-
+1. Image 1 (fish.jpg): The SACRED BASE MODEL. Use this for the absolute ANATOMY, POSE, and ART STYLE.
+2. Image 2 (User PFP): THE AESTHETIC SOURCE. Use this for the eyes, hair, headwear, and clothing patterns/colors.
 
 MISSION: > Decorate the fish from Image 1 using the visual identity of the character in Image 2. The fish must remain in its original swimming posture.
 
-
 STEP-BY-STEP RITUAL:
 
-
 EYE TRANSPLANT:
-
-
 Replace the fish's eyes from Image 1 with the exact eyes (shape, iris color, expression) of the character in Image 2.
-
-
 Redraw these eyes using the "sketchy," hand-painted digital medium of the fish.
-
-
 Keep the fish's original head shape and its signature yellow/gold lips.
 
-ANATOMICAL OVERRIDE: Do not default to human eyes. Analyze the character in Image 2. If their eyes are dots, glowing orbs, hollow sockets, or stylized symbols (crosses, spirals, etc.), the fish must adopt that exact morphology.
-
-
 HEADWEAR & HAIR INTEGRATION:
-
-
 If the character in Image 2 has a hat, crown, or hair, draw a version of it onto the fish's head.
-
-
 The accessory must follow the curve of the fish's head and fins organically. It should look like the fish is "wearing" it.
 
-
 THE AESTHETIC WRAP (CLOTHING):
-
-
 DO NOT make the fish stand up or wear the shirt like a human.
-
-
 IGNORE LOWER BODY: Absolutely ignore any trousers, pants, shorts, or shoes present in Image 2. These have no place in the shoal.
-
-
 Instead, apply the colors, patterns, and textures of the character's shirt/dress as a "Sacred Wrap" or "Custom Skin" onto the fish's front belly and side-body area.
-
-
 The "Shirt-Skin" must follow the fish's natural curved posture PROFESSIONALLY, fitting and covering the fish body perfectly like a tailored second skin.
-
-
 If the character wears a suit, the fish's scales in that area should adopt the texture and color of the suit fabric, respecting the fish's natural curved posture.
 
-
 MEDIUM & TEXTURE ENFORCEMENT:
-
-
 FORBIDDEN: Realistic skin, photo-filters, or smooth 3D rendering.
-
-
 MANDATORY: Everything must be rendered in the "messy," textured, hand-drawn digital paint style of Image 1.
-
-
 The final image must look like a professional, hand-painted concept art piece.
 
-
 THE ABYSSAL BACKGROUND:
-
-
 Set the fish in a PURE ABYSSAL BLACK (#000000) void.
-
 Add subtle bioluminescent glowing spores and faint, sketchy iridescent bubble trails.
 
 FINAL CHECK: Does the fish look like it’s wearing a "skin" based on the person? Is the fish's original swimming pose preserved? Have trousers and shoes been correctly ignored? If the AI forced the fish to stand up or gave it a human nose, the ritual has failed.
