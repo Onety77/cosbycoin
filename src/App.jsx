@@ -495,7 +495,7 @@ const App = () => {
       7. Leave the remaining 70%% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
       8. On top of that whole free space/background, write "MAKE IT RIGHT", ugly handwriting, hand drawn vibes, fiting color with a white stroke around the letters, make it fun, sketchy and match the background vibes.
       9. The goal is to make the subject look like they are fleeing to the far right. The final output must be a panoramic 4:1 artifact. 
-      10. NO BORDER. 
+      10. NO BORDER. IT IS CRUCIAL THAT THE OUPUT SIZE IS IMAGE 2 SIZE (WIDE TEMPLATE)
       
       `;
 
