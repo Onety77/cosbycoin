@@ -58,7 +58,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   Activity,
-  Check
+  Check,
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react';
 
 
@@ -112,6 +114,7 @@ const COLOR_LIST = [
 ];
 
 const CHAT_PLAYLIST = [
+  { title: "GET_IT_STARTED", file: "GET_IT_STARTED.mp3" },
   { title: "PUMP_IT", file: "https://firebasestorage.googleapis.com/v0/b/it-token.firebaseapp.com/o/music%2Fpump_it.mp3?alt=media&token=050c599d-1894-494d-b380-d14b51405d6c" },
   { title: "PUMP_IT_UP", file: "PUMP_IT_UP.mp3" },
   { title: "PUMP_IT_UP_00", file: "https://firebasestorage.googleapis.com/v0/b/it-token.firebaseapp.com/o/music%2Fpump_it_up2.mp3?alt=media&token=d14da2fe-ba13-40bc-8fc2-055b7a46b23c" },
@@ -397,12 +400,14 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
   );
 };
 
+
 const App = () => {
   const [view, setView] = useState('home'); 
   const [copied, setCopied] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showXNote, setShowXNote] = useState(false);
+  const [logoPulse, setLogoPulse] = useState(false);
   const ca = "0xRIGHT_COIN_CONTRACT_ADDRESS_TBA";
 
   // AI State Logic
@@ -430,6 +435,14 @@ const App = () => {
   };
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
+
+  const handleLogoClick = () => {
+    setLogoPulse(true);
+    setTimeout(() => {
+      setLogoPulse(false);
+      setView('home');
+    }, 600);
+  };
 
   const getBase64FromUrl = async (url) => {
     try {
@@ -518,6 +531,65 @@ const App = () => {
     link.click();
   };
 
+  const HomeView = () => (
+    <div className="animate-fade-in flex flex-col items-end w-full">
+      <header className="flex flex-col items-end pt-12 mb-12 group cursor-pointer">
+        <div className="relative mb-8" onClick={handleLogoClick}>
+          <img 
+            src="logo.png" 
+            alt="Logo" 
+            className={`w-20 h-20 object-contain transition-all duration-500 transform active:scale-90 ${logoPulse ? 'scale-110 rotate-[25deg] filter brightness-150' : 'group-hover:scale-110 group-hover:-rotate-6'}`} 
+          />
+        </div>
+        <h2 className="text-2xl font-black tracking-tighter leading-[0.9] uppercase italic transition-all duration-500 group-hover:opacity-70">
+          made for the <br/>right people
+        </h2>
+        <div className="h-1.5 w-12 bg-current mt-5 transition-all duration-700 group-hover:w-full" />
+      </header>
+
+      <main className="flex flex-col items-end space-y-12 mb-20 w-full">
+        <div className="space-y-1 flex flex-col items-end font-mono text-right">
+          <p className="text-[14px] font-bold tracking-tight italic opacity-80 transition-all hover:translate-x-[-4px]">this wasn’t promoted.</p>
+          <p className="text-[14px] font-bold tracking-tight italic opacity-60 transition-all hover:translate-x-[-4px]">it wasn’t rushed.</p>
+          <p className="text-[14px] font-bold tracking-tight italic opacity-40 transition-all hover:translate-x-[-4px]">it didn’t ask for attention.</p>
+          
+          <div className="flex flex-col items-end gap-3 mt-10">
+            <button 
+              onClick={() => setView('world')}
+              className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
+            >
+              Make things right <MoveRight size={14} />
+            </button>
+            <button 
+              onClick={() => setView('community')}
+              className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
+            >
+              Right Community <Users size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="w-full flex flex-col items-end space-y-10 group/asset overflow-hidden">
+          <div className="text-right w-full overflow-hidden relative">
+            <span className={`absolute top-0 right-0 text-[clamp(1.5rem,8vw,3rem)] font-black italic tracking-tighter leading-none opacity-5 transition-all duration-700 group-hover:translate-x-4 group-hover:-translate-y-2 max-w-full truncate`}>$RIGHTCOIN</span>
+            <span className="relative z-10 text-[clamp(1.5rem,8vw,3rem)] font-black italic tracking-tighter leading-none select-all block transition-all hover:tracking-normal max-w-full truncate">$RIGHTCOIN</span>
+            <div className="h-[1px] w-full bg-current mt-4 opacity-10" />
+          </div>
+
+          <div className="flex flex-col items-end group/ca w-full">
+            <span className={`text-[8px] font-black uppercase tracking-[0.4em] mb-3 italic opacity-40`}>Contract Address</span>
+            <div onClick={() => copyToClipboard(ca)} className={`w-full cursor-pointer border-r-4 py-4 px-6 transition-all flex items-center justify-between ${darkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}>
+              <div className="transition-transform group-hover/ca:rotate-12">
+                {copied ? <ShieldCheck size={18} className="text-green-500" /> : <Copy size={18} className="opacity-20" />}
+              </div>
+              <span className="font-mono text-[11px] tracking-tighter opacity-40 group-hover/ca:opacity-100 uppercase truncate ml-4">{copied ? "COPIED" : ca.slice(0, 18) + "..."}</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+
   return (
     <div className={`min-h-screen transition-colors duration-700 flex justify-end font-sans selection:bg-current selection:text-current relative overflow-hidden ${darkMode ? 'bg-[#080808] text-white' : 'bg-[#fcfcfc] text-black'}`}>
       
@@ -526,176 +598,121 @@ const App = () => {
 
       <div className={`w-full max-w-md md:max-w-sm lg:max-w-[340px] flex flex-col p-8 md:p-12 lg:p-14 text-right relative z-10 border-l ${darkMode ? 'border-white/5 bg-black/40 shadow-2xl' : 'border-black/5 bg-white/40 shadow-xl'} overflow-y-auto no-scrollbar scroll-smooth`}>
         
-        {view === 'home' && (
+        {view === 'home' ? (
+          <HomeView />
+        ) : (
           <div className="animate-fade-in flex flex-col items-end w-full">
-            <header className="flex flex-col items-end pt-12 mb-12 group cursor-pointer">
-              <div className="relative mb-8">
-                <svg viewBox="0 0 100 100" className="w-20 h-20 transition-all duration-500">
-                  <circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="6 6" className="rc-spin-slow opacity-20" />
-                  <g className="transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:rotate-0 rotate-[-110deg] origin-center">
-                    <path d="M20 50 L80 50 M65 35 L80 50 L65 65" stroke="currentColor" strokeWidth="12" fill="none" strokeLinecap="square" />
-                  </g>
-                </svg>
+            <header className="w-full mb-10 flex flex-col items-end">
+              <div className="w-full flex justify-between items-center mb-8">
+                <button 
+                  onClick={() => setView('home')} 
+                  className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.5em] opacity-40 hover:opacity-100 transition-opacity"
+                >
+                  <ArrowLeft size={12} /> Back
+                </button>
+                <img 
+                  src="logo.png" 
+                  alt="Logo" 
+                  onClick={handleLogoClick}
+                  className={`w-8 h-8 object-contain cursor-pointer transition-transform duration-300 ${logoPulse ? 'scale-125 rotate-12' : 'hover:scale-110'}`} 
+                />
               </div>
-              <h2 className="text-2xl font-black tracking-tighter leading-[0.9] uppercase italic transition-all duration-500 group-hover:opacity-70">
-                made for the <br/>right people
-              </h2>
-              <div className="h-1.5 w-12 bg-current mt-5 transition-all duration-700 group-hover:w-full" />
+              <h3 className="text-3xl font-black italic uppercase border-r-8 border-current pr-4 leading-[0.8]">
+                {view === 'world' ? 'Make Things\nRight' : 'Right\nCommunity'}
+              </h3>
             </header>
 
-            <main className="flex flex-col items-end space-y-12 mb-20 w-full">
-              <div className="space-y-1 flex flex-col items-end font-mono text-right">
-                <p className="text-[14px] font-bold tracking-tight italic opacity-80 transition-all hover:translate-x-[-4px]">this wasn’t promoted.</p>
-                <p className="text-[14px] font-bold tracking-tight italic opacity-60 transition-all hover:translate-x-[-4px]">it wasn’t rushed.</p>
-                <p className="text-[14px] font-bold tracking-tight italic opacity-40 transition-all hover:translate-x-[-4px]">it didn’t ask for attention.</p>
-                
-                <div className="flex flex-col items-end gap-3 mt-10">
-                  <button 
-                    onClick={() => setView('world')}
-                    className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
-                  >
-                    Make things right <MoveRight size={14} />
-                  </button>
-                  <button 
-                    onClick={() => setView('community')}
-                    className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
-                  >
-                    Right Community <Users size={14} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-full flex flex-col items-end space-y-10 group/asset">
-                <div className="text-right w-full overflow-hidden relative">
-                  {/* Styled Phantom Text */}
-                  <span className={`absolute top-0 right-0 text-[clamp(1.5rem,5vw,2.5rem)] font-black italic tracking-tighter leading-none opacity-5 transition-all duration-700 group-hover:translate-x-4 group-hover:-translate-y-2`}>$RIGHTCOIN</span>
-                  <span className="relative z-10 text-[clamp(1.5rem,5vw,2.5rem)] font-black italic tracking-tighter leading-none select-all block transition-all hover:tracking-normal">$RIGHTCOIN</span>
-                  <div className="h-[1px] w-full bg-current mt-4 opacity-10" />
-                </div>
-
-                <div className="flex flex-col items-end group/ca w-full">
-                  <span className={`text-[8px] font-black uppercase tracking-[0.4em] mb-3 italic opacity-40`}>Contract Address</span>
-                  <div onClick={() => copyToClipboard(ca)} className={`w-full cursor-pointer border-r-4 py-4 px-6 transition-all flex items-center justify-between ${darkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}>
-                    <div className="transition-transform group-hover/ca:rotate-12">
-                      {copied ? <ShieldCheck size={18} className="text-green-500" /> : <Copy size={18} className="opacity-20" />}
-                    </div>
-                    <span className="font-mono text-[11px] tracking-tighter opacity-40 group-hover/ca:opacity-100 uppercase">{copied ? "COPIED" : ca.slice(0, 18) + "..."}</span>
+            {view === 'world' ? (
+              <div className="w-full space-y-16">
+                <div className="space-y-6 flex flex-col items-end w-full">
+                  <div className="flex items-center gap-2 opacity-30 text-[9px] font-black uppercase tracking-widest"><Cpu size={12} /> Artifact_Architect</div>
+                  <div className="w-full space-y-6">
+                    <label className={`w-full h-40 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden ${darkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/10 hover:bg-black/5'}`}>
+                      {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />}
+                      <div className="relative z-10 flex flex-col items-center gap-2">
+                        <ImageIcon size={20} className="opacity-40" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme Source</span>
+                      </div>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                    
+                    {/* Make it right button - Persistent Visibility, Explicit Colors */}
+                    <button 
+                      onClick={architectMeme} 
+                      disabled={!uploadImage || isGenerating} 
+                      className={`w-full py-4 font-black uppercase text-[10px] tracking-[0.5em] disabled:opacity-30 active:translate-y-1 transition-all ${darkMode ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+                    >
+                      {isGenerating ? <><RefreshCw size={14} className="animate-spin inline mr-2" /> Processing...</> : "Make it right"}
+                    </button>
+                    
+                    {error && <p className="text-red-500 text-[9px] font-black uppercase tracking-widest">{error}</p>}
+                    
+                    {generatedMeme && (
+                      <div className="space-y-4 animate-fade-in flex flex-col items-end w-full group">
+                        <div className="relative cursor-zoom-in w-full" onClick={() => setShowModal(true)}>
+                          <img src={generatedMeme} className={`w-full h-auto border-r-8 border-current shadow-2xl transition-all duration-700 grayscale group-hover:grayscale-0 ${darkMode ? 'border-white' : 'border-black'}`} alt=""/>
+                          <div className="absolute top-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded opacity-0 group-hover:opacity-100 transition-opacity"><Maximize2 size={14} className="text-white" /></div>
+                        </div>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          downloadArtifact();
+                        }} className="mt-4 text-[9px] font-black uppercase border-b border-current pb-1 opacity-40 hover:opacity-100 transition-opacity">Save Artifact</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </main>
-          </div>
-        )}
-        
-        {view === 'world' && (
-          <div className="animate-fade-in flex flex-col items-end w-full">
-            <header className="w-full mb-10 flex flex-col items-end">
-              <button onClick={() => setView('home')} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.5em] mb-8 opacity-40 hover:opacity-100 transition-opacity">
-                <ArrowLeft size={12} /> Back
-              </button>
-              <h3 className="text-3xl font-black tracking-tighter italic uppercase border-r-8 border-current pr-4 leading-[0.8]">Make Things<br/>Right</h3>
-            </header>
-
-            <div className="w-full space-y-16">
-              <div className="space-y-6 flex flex-col items-end">
-                <div className="flex items-center gap-2 opacity-30 text-[9px] font-black uppercase tracking-widest"><Cpu size={12} /> Artifact_Architect</div>
-                <div className="w-full space-y-6">
-                  <label className={`w-full h-40 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden ${darkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/10 hover:bg-black/5'}`}>
-                    {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale" alt="Preview" />}
-                    <div className="relative z-10 flex flex-col items-center gap-2">
-                       <ImageIcon size={20} className="opacity-40" />
-                       <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme Source</span>
-                    </div>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                  
-                  {uploadImage && (
-                    <button 
-                      onClick={architectMeme} 
-                      disabled={isGenerating} 
-                      className={`w-full py-4 font-black uppercase text-[10px] tracking-[0.5em] flex items-center justify-center gap-4 transition-all disabled:opacity-20 ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}`}
-                    >
-                      {isGenerating ? <><RefreshCw size={14} className="animate-spin" /> Processing Artifact...</> : "Enforce Right Bias"}
-                    </button>
-                  )}
-
-                  {error && <p className="text-red-500 text-[9px] font-black uppercase tracking-widest">{error}</p>}
-
-                  {generatedMeme && (
-                    <div className="space-y-4 animate-fade-in flex flex-col items-end w-full group">
-                      <div className="relative cursor-zoom-in w-full" onClick={() => setShowModal(true)}>
-                         <img src={generatedMeme} className={`w-full h-auto border-r-8 border-current shadow-2xl transition-all duration-700 grayscale group-hover:grayscale-0 ${darkMode ? 'border-white' : 'border-black'}`} alt="Result" />
-                         <div className="absolute top-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded opacity-0 group-hover:opacity-100 transition-opacity"><Maximize2 size={14} className="text-white" /></div>
-                      </div>
-                      <button onClick={downloadArtifact} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest border-b border-current pb-1 transition-all hover:opacity-100"><Download size={12} /> Save Artifact</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {view === 'community' && (
-          <div className="animate-fade-in flex flex-col items-end w-full">
-            <header className="w-full mb-10 flex flex-col items-end">
-              <button onClick={() => setView('home')} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.5em] mb-8 opacity-40 hover:opacity-100 transition-opacity">
-                <ArrowLeft size={12} /> Back
-              </button>
-              <h3 className="text-3xl font-black tracking-tighter italic uppercase border-r-8 border-current pr-4 leading-[0.8]">Right<br/>Community</h3>
-            </header>
-
-            <ChatApp db={db} auth={auth} appId={appId} darkMode={darkMode} />
+            ) : (
+              <ChatApp db={db} auth={auth} appId={appId} darkMode={darkMode} />
+            )}
           </div>
         )}
 
         <footer className="flex flex-col items-end gap-12 mt-auto pb-6 pt-20">
-          <button onClick={toggleDarkMode} className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.4em] opacity-20 hover:opacity-100 transition-opacity">
-            {darkMode ? <Sun size={12} /> : <Moon size={12} />} <span>Mode</span>
+          <button onClick={() => setDarkMode(!darkMode)} className="text-[9px] font-black uppercase tracking-[0.4em] opacity-20 hover:opacity-100 transition-opacity flex items-center gap-2">
+            {darkMode ? <Sun size={12}/> : <Moon size={12}/>} Mode
           </button>
           
-          <div className={`flex flex-col items-end text-right border-r-[8px] pr-6 transition-all duration-1000 ${darkMode ? 'border-white/10 hover:border-white' : 'border-black/5 hover:border-black'}`}>
-            <p className="text-[18px] md:text-[22px] font-mono font-black tracking-tight leading-none mb-2 italic">IF YOU’RE HERE,</p>
-            <p className="text-[18px] md:text-[22px] font-mono font-black tracking-tight leading-none italic">YOU ALREADY KNOW WHY.</p>
+          <div className={`flex flex-col items-end text-right border-r-[8px] pr-6 transition-all duration-1000 border-current border-opacity-10`}>
+            <p className="text-[18px] md:text-[22px] font-mono font-black italic tracking-tight leading-none mb-2">IF YOU’RE HERE,</p>
+            <p className="text-[18px] md:text-[22px] font-mono font-black italic tracking-tight leading-none">YOU ALREADY KNOW WHY.</p>
           </div>
           
-          <div className="flex flex-col items-end gap-10">
-            <div className={`flex gap-12 transition-all duration-1000 ${darkMode ? 'opacity-20 hover:opacity-100' : 'opacity-10 hover:opacity-100'}`}>
-              <a href="https://pump.fun" target="_blank" rel="noopener noreferrer" className="hover:scale-150 transition-all duration-500">
-                <Zap size={22} strokeWidth={1.5} />
-              </a>
-              <button onClick={() => setShowXNote(true)} className="hover:scale-150 transition-all duration-500">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-               <div className="h-[1px] w-16 opacity-20 bg-current" />
-               <span className="text-[9px] font-black uppercase tracking-[1.5em] opacity-10 font-mono">RIGHT</span>
-            </div>
+          <div className="flex gap-10">
+            <a href="https://pump.fun" target="_blank" rel="noopener noreferrer" className="hover:scale-150 transition-all duration-500 opacity-40 hover:opacity-100">
+              <Zap size={22} fill="currentColor" stroke="none" />
+            </a>
+            <button onClick={() => setShowXNote(true)} className="hover:scale-150 transition-all duration-500 opacity-40 hover:opacity-100">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="h-[1px] w-16 opacity-20 bg-current" />
+             <span className="text-[9px] font-black uppercase tracking-[1.5em] opacity-10 font-mono">RIGHT</span>
           </div>
         </footer>
       </div>
 
       {showXNote && (
-        <div className="fixed inset-0 z-[110] flex justify-end animate-fade-in backdrop-blur-md bg-black/40 p-4 md:p-12" onClick={() => setShowXNote(false)}>
-           <div className={`w-full max-w-sm h-fit my-auto p-10 border-r-[12px] shadow-2xl animate-scale-up ${darkMode ? 'bg-black border-white/20 text-white' : 'bg-white border-black/10 text-black'}`} onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setShowXNote(false)} className="mb-8 opacity-40 hover:opacity-100 transition-opacity"><X size={20}/></button>
-              <h4 className="text-xl font-black uppercase italic tracking-tighter mb-6">X // Signal_Update</h4>
-              <p className="text-sm font-bold leading-relaxed mb-8 opacity-60">Right community will make the right X community and it will be updated.</p>
-              <div className="h-[1px] w-20 bg-current opacity-20" />
+        <div className="fixed inset-0 z-[110] flex justify-end backdrop-blur-md bg-black/40 p-4 md:p-12" onClick={() => setShowXNote(false)}>
+           <div className={`w-full max-w-sm h-fit my-auto p-10 border-r-[12px] shadow-2xl animate-scale-up ${darkMode ? 'bg-black border-white/20 text-white' : 'bg-white border-black/10 text-black'}`} onClick={e => e.stopPropagation()}>
+              <X size={20} className="mb-8 cursor-pointer opacity-40 hover:opacity-100" onClick={() => setShowXNote(false)}/>
+              <h4 className="text-xl font-black uppercase italic mb-6">X // Signal_Update</h4>
+              <p className="text-sm font-bold opacity-60 leading-relaxed">Right People will make the right community for this coin.</p>
+              <div className="h-[1px] w-20 bg-current opacity-20 mt-8" />
            </div>
         </div>
       )}
 
       {showModal && generatedMeme && (
-        <div className="fixed inset-0 z-[100] flex justify-end animate-fade-in backdrop-blur-xl bg-black/60 p-4 md:p-12 lg:p-24" onClick={() => setShowModal(false)}>
-           <div className="w-full max-w-5xl h-fit my-auto bg-black border-r-[24px] border-white/10 p-4 shadow-[0_0_100px_rgba(0,0,0,0.5)] relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setShowModal(false)} className="absolute -top-12 right-0 text-white/40 hover:text-white flex items-center gap-2 uppercase font-black text-[10px] tracking-widest">
-                Close Artifact <X size={14} />
+        <div className="fixed inset-0 z-[100] flex justify-end backdrop-blur-xl bg-black/60 p-4 md:p-12 lg:p-24" onClick={() => setShowModal(false)}>
+           <div className="w-full max-w-5xl h-fit my-auto bg-black border-r-[24px] border-white/10 p-4 shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowModal(false)} className="absolute -top-12 right-0 text-white/40 uppercase font-black text-[10px] tracking-widest flex items-center gap-2 hover:text-white transition-colors">
+                Close Artifact <X size={14}/>
               </button>
-              <img src={generatedMeme} className="w-full h-auto" alt="Full Artifact" />
+              <img src={generatedMeme} className="w-full h-auto" alt="" />
            </div>
         </div>
       )}
@@ -703,12 +720,10 @@ const App = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes rc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scale-up { from { opacity: 0; transform: translateX(50px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes scale-up { from { opacity: 0; transform: translateX(30px) scale(0.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
         .rc-spin-slow { animation: rc-spin 45s linear infinite; transform-origin: center; }
         .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
-        .animate-scale-up { animation: scale-up 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .grid-white { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 0); background-size: 50px 50px; }
-        .grid-black { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 0); background-size: 50px 50px; }
+        .animate-scale-up { animation: scale-up 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
         .noise-overlay { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
         body::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar { display: none; }
         body, .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; cursor: crosshair; }
