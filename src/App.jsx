@@ -493,7 +493,7 @@ const App = () => {
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
       6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
       7. Leave the remaining 70%% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
-      8. On top of that Newly drawn background, write "MAKE IT RIGHT", ugly handwriting, hand drawn vibes, fiting color, make it fun, sketchy and match the background vibes.
+      8. On top of that Newly drawn background, write "MAKE IT RIGHT", small size, find the perfect spot for it according to the image, ugly handwriting, hand drawn vibes, fiting color, make it artsy, sketchy and match the background vibes.
       9. The goal is to make the subject look like they are fleeing to the far right. The final output must be a panoramic 4:1 artifact. 
       10. NO BORDER. IT IS CRUCIAL THAT THE OUPUT SIZE IS IMAGE 2 SIZE (WIDE TEMPLATE). 
       
