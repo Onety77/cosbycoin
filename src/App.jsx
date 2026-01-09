@@ -74,13 +74,11 @@ const firebaseConfig = {
   appId: "1:804328953904:web:e760545b579bf2527075f5"
 };
 
-// Singleton Firebase Initialization
 const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const appId = 'it-token-os';
 
-// Environment-safe API Key Logic for Gemini
 const apiKey = (() => {
   try {
     if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_GEMINI) return import.meta.env.VITE_APP_GEMINI;
@@ -94,7 +92,6 @@ const apiKey = (() => {
   return typeof __apiKey !== 'undefined' ? __apiKey : "";
 })();
 
-// --- ASSETS ---
 const AVATAR_LIST = [
   { id: 'pepe', name: 'PEPE', url: '/pfps/pepe.jpg' },
   { id: 'doge', name: 'DOGE', url: '/pfps/doge.jpg' },
@@ -126,7 +123,7 @@ const CHAT_PLAYLIST = [
   { title: "MEME_IT", file: "MEME_IT.mp3" }
 ];
 
-const ChatApp = ({ db, auth, appId, darkMode }) =>  {
+const ChatApp = ({ db, auth, appId, darkMode }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [username, setUsername] = useState("");
@@ -137,11 +134,19 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
   const [isMuted, setIsMuted] = useState(false);
   const [trackIndex, setTrackIndex] = useState(0);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [error, setError] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [copiedCA, setCopiedCA] = useState(false);
 
   const scrollRef = useRef(null);
   const audioRef = useRef(null);
+  const adminRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const CA_ADDRESS = "0xRIGHT_COIN_CONTRACT_ADDRESS_TBA";
 
   // 1. Auth Sync
   useEffect(() => {
@@ -160,64 +165,80 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
     return () => unsubscribe();
   }, [auth]);
 
-  // 2. Real-time Database Listener - Updated to match other app's collection name
+  // 2. Database Listener
   useEffect(() => {
     if (!user || !db) return;
-    // Updated collection name to trollbox_messages to match existing data
     const msgCollection = collection(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages');
     
     const unsubscribe = onSnapshot(msgCollection, (snapshot) => {
       const msgs = snapshot.docs.map(doc => {
         const data = doc.data();
-        // Robust timestamp handling from other app logic
         let ts = data.timestamp?.toDate ? data.timestamp.toDate().getTime() : (data.timestamp || Date.now());
         return { id: doc.id, ...data, _sortTs: ts };
       });
       
       const sorted = msgs.sort((a, b) => a._sortTs - b._sortTs);
       setMessages(sorted.slice(-100)); 
-      
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-      }
-    }, (err) => {
-      console.error("Database sync lost:", err);
-      setError("Sync interference detected.");
     });
 
     return () => unsubscribe();
   }, [user, db, appId]);
 
-  // 3. Audio Controller
+  // 3. Audio logic
   useEffect(() => {
     if (!isSetup || isMuted || !CHAT_PLAYLIST[trackIndex]) {
       if (audioRef.current) audioRef.current.pause();
       return;
     }
-
-    const playTrack = () => {
-      const track = CHAT_PLAYLIST[trackIndex];
-      if (!audioRef.current) {
-        audioRef.current = new Audio(track.file);
-        audioRef.current.volume = 0.2;
-      } else {
-        if (audioRef.current.src !== track.file) {
-          audioRef.current.src = track.file;
-        }
-      }
-      
-      audioRef.current.play().catch(() => setIsMuted(true));
-      audioRef.current.onended = () => setTrackIndex((prev) => (prev + 1) % CHAT_PLAYLIST.length);
-    };
-
-    playTrack();
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.onended = null;
-      }
-    };
+    const track = CHAT_PLAYLIST[trackIndex];
+    if (!audioRef.current) {
+      audioRef.current = new Audio(track.file);
+      audioRef.current.volume = 0.2;
+    } else if (audioRef.current.src !== track.file) {
+      audioRef.current.src = track.file;
+    }
+    audioRef.current.play().catch(() => setIsMuted(true));
+    audioRef.current.onended = () => setTrackIndex((prev) => (prev + 1) % CHAT_PLAYLIST.length);
   }, [isSetup, isMuted, trackIndex]);
+
+  const scrollToBottom = (behavior = 'smooth') => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
+    }
+  };
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    setShowScrollDown(scrollHeight - scrollTop - clientHeight > 300);
+  };
+
+  const copyToClipboard = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopiedCA(true);
+    setTimeout(() => setCopiedCA(false), 2000);
+  };
+
+  const handleReaction = async (msgId, emoji) => {
+    setContextMenu(null);
+    const storageKey = `reacted_${msgId}_${emoji}`;
+    const hasReacted = localStorage.getItem(storageKey);
+    const msgRef = doc(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages', msgId);
+    
+    try {
+      if (hasReacted) {
+        await updateDoc(msgRef, { [`reactions.${emoji}`]: increment(-1) });
+        localStorage.removeItem(storageKey);
+      } else {
+        await updateDoc(msgRef, { [`reactions.${emoji}`]: increment(1) });
+        localStorage.setItem(storageKey, "true");
+      }
+    } catch (e) {}
+  };
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();
@@ -225,34 +246,28 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
 
     setIsSending(true);
     const text = inputText.trim();
+    const reply = replyingTo;
     setInputText("");
+    setReplyingTo(null);
 
     try {
-      // Path must be artifacts -> {appId} -> public -> data -> trollbox_messages
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages'), {
         text,
         uid: user.uid,
         user: username,
         color: userColor,
         avatar: userAvatar,
+        replyTo: reply ? { user: reply.user, text: reply.text } : null,
         timestamp: serverTimestamp(),
-        reactions: { heart: 0, up: 0, down: 0 }
+        reactions: { heart: 0, up: 0 }
       });
-      setError(null);
+      setTimeout(() => scrollToBottom(), 150);
     } catch (err) {
-      console.error("Firebase Error:", err);
-      setError("Send failed. Please try again.");
+      setError("Send failed");
       setInputText(text);
     } finally {
       setIsSending(false);
     }
-  };
-
-  const handleReaction = async (msgId, emoji) => {
-    const msgRef = doc(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages', msgId);
-    try {
-      await updateDoc(msgRef, { [`reactions.${emoji}`]: increment(1) });
-    } catch (e) {}
   };
 
   const handleJoin = () => {
@@ -261,18 +276,20 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
     localStorage.setItem('right_color', userColor);
     localStorage.setItem('right_avatar', userAvatar);
     setIsSetup(true);
-    setError(null);
     setIsMuted(false);
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.reload();
+  const handleTouchStart = (e, msg) => {
+    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    longPressTimer.current = setTimeout(() => {
+      setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg });
+    }, 600);
   };
 
-  const handleAppearanceChange = () => {
-    setIsSetup(false);
-    setActiveMenu(null);
+  const handleTouchMove = (e) => {
+    const moveX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+    const moveY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+    if (moveX > 10 || moveY > 10) clearTimeout(longPressTimer.current);
   };
 
   if (!isSetup) {
@@ -281,29 +298,17 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
       <div className="flex flex-col items-end w-full animate-fade-in font-mono">
         <div className={`w-full p-8 border-2 border-dashed flex flex-col gap-8 ${darkMode ? 'border-white/10 bg-white/5' : 'border-black/5 bg-black/5'}`}>
           <div className="text-right space-y-2">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40 italic">
-               {isNewUser ? 'Choose your look' : 'Update appearance'}
-            </h4>
-            <input 
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toUpperCase())}
-              placeholder="YOUR_NAME"
-              disabled={!isNewUser}
-              className={`w-full bg-transparent border-b-2 border-current py-4 text-right outline-none text-2xl font-black italic tracking-tighter ${!isNewUser ? 'opacity-30' : ''}`}
-            />
+            <h4 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40 italic">{isNewUser ? 'Choose your look' : 'Update appearance'}</h4>
+            <input value={username} onChange={(e) => setUsername(e.target.value.toUpperCase())} placeholder="YOUR_NAME" disabled={!isNewUser} className={`w-full bg-transparent border-b-2 border-current py-4 text-right outline-none text-2xl font-black italic tracking-tighter ${!isNewUser ? 'opacity-30' : ''}`} />
           </div>
-
           <div className="space-y-4">
              <span className="text-[8px] font-black uppercase tracking-widest opacity-30 block text-right">Choose Avatar</span>
              <div className="grid grid-cols-6 gap-2">
                 {AVATAR_LIST.map(av => (
-                  <button key={av.id} onClick={() => setUserAvatar(av.url)} className={`aspect-square border-2 transition-all ${userAvatar === av.url ? 'border-current scale-110' : 'border-transparent opacity-30 hover:opacity-100'}`}>
-                    <img src={av.url} className="w-full h-full object-cover pointer-events-none" alt="" />
-                  </button>
+                  <button key={av.id} onClick={() => setUserAvatar(av.url)} className={`aspect-square border-2 transition-all ${userAvatar === av.url ? 'border-current scale-110' : 'border-transparent opacity-30 hover:opacity-100'}`}><img src={av.url} className="w-full h-full object-cover pointer-events-none" alt="" /></button>
                 ))}
              </div>
           </div>
-
           <div className="space-y-4">
              <span className="text-[8px] font-black uppercase tracking-widest opacity-30 block text-right">Theme Color</span>
              <div className="flex justify-end gap-3">
@@ -312,10 +317,7 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
                 ))}
              </div>
           </div>
-
-          <button onClick={handleJoin} className="w-full py-4 bg-current text-current-bg font-black uppercase text-xs tracking-[0.4em] hover:opacity-80 transition-all">
-             {isNewUser ? 'Join Chat' : 'Save & Return'}
-          </button>
+          <button onClick={handleJoin} className="w-full py-4 bg-current text-current-bg font-black uppercase text-xs tracking-[0.4em] hover:opacity-80 transition-all">{isNewUser ? 'Join' : 'Save'}</button>
           {error && <p className="text-red-500 text-[9px] uppercase font-black text-right">{error}</p>}
         </div>
       </div>
@@ -323,79 +325,81 @@ const ChatApp = ({ db, auth, appId, darkMode }) =>  {
   }
 
   return (
-    <div className="flex flex-col w-full h-[600px] animate-fade-in font-mono relative">
-      <div className={`flex justify-between items-center p-3 border-b mb-4 ${darkMode ? 'border-white/10' : 'border-black/5'}`}>
-         <div className="flex items-center gap-3">
-            <button onClick={() => setIsMuted(!isMuted)} className="opacity-40 hover:opacity-100 transition-opacity">
-               {isMuted ? <VolumeX size={16}/> : <Volume2 size={16} className="text-green-500 animate-pulse" />}
-            </button>
-            <div className="text-[8px] uppercase tracking-widest opacity-20 truncate max-w-[100px]">
-               {isMuted ? 'Muted' : CHAT_PLAYLIST[trackIndex]?.title}
-            </div>
-         </div>
-         <div className="flex items-center gap-4">
-            <button onClick={() => setTrackIndex(p => (p + 1) % CHAT_PLAYLIST.length)} className="opacity-20 hover:opacity-100 transition-opacity"><SkipForward size={14}/></button>
-            <button onClick={() => setActiveMenu(activeMenu ? null : 'settings')} className="opacity-40 hover:opacity-100 transition-opacity">
-               <Settings size={16}/>
-            </button>
-         </div>
+    <div className="flex flex-col w-full h-[600px] animate-fade-in font-mono relative select-none" onClick={() => { setContextMenu(null); setActiveMenu(null); }}>
+      <div className={`sticky top-0 z-[60] w-full px-4 py-2 border-b flex items-center justify-between backdrop-blur-md cursor-pointer transition-colors ${darkMode ? 'bg-black/80 border-white/10 hover:bg-white/5' : 'bg-white/80 border-black/5 hover:bg-black/5'}`} onClick={() => adminRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+          <span className="text-[8px] font-black text-[#f59e0b] uppercase tracking-widest italic animate-pulse flex items-center gap-2"><ShieldAlert size={10}/> Pinned CA</span>
+          <span className="text-[7px] opacity-40 truncate px-4 font-bold">{CA_ADDRESS}</span>
+          <Copy size={10} className="opacity-20" />
       </div>
+      <div className={`flex justify-between items-center p-3 border-b mb-2 ${darkMode ? 'border-white/10' : 'border-black/5'}`}>
+         <div className="flex items-center gap-2">
+            <button onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }} className="opacity-40 hover:opacity-100">{isMuted ? <VolumeX size={16}/> : <Volume2 size={16} className="text-green-500 animate-pulse" />}</button>
+            <button onClick={(e) => { e.stopPropagation(); setTrackIndex(p => (p + 1) % CHAT_PLAYLIST.length); }} className="opacity-20 hover:opacity-100"><SkipForward size={14}/></button>
+            <div className="text-[8px] uppercase tracking-widest opacity-20 truncate max-w-[100px] ml-2">{isMuted ? 'Muted' : CHAT_PLAYLIST[trackIndex]?.title}</div>
+         </div>
+         <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu ? null : 'settings'); }} className="opacity-40 hover:opacity-100"><Settings size={16}/></button>
+      </div>
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar relative scroll-smooth">
+        {/* PERMANENT ADMIN SIGNAL - Now styled as a standard chat item but with unique style */}
+        <div ref={adminRef} className="flex flex-col items-start animate-fade-in w-full mb-4">
+           <div className="flex items-center gap-2 mb-1">
+              <img src="/pfps/mask.jpg" className="w-4 h-4 object-cover rounded-sm border border-[#f59e0b]/30" alt="" />
+              <span className="text-[8px] font-black uppercase tracking-tighter text-[#f59e0b]">Admin</span>
+              <span className="text-[7px] opacity-20 uppercase font-black">[Official]</span>
+           </div>
+           <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all shadow-md cursor-pointer border-[#f59e0b] ${darkMode ? 'bg-[#f59e0b]/5 text-[#f59e0b] shadow-[#f59e0b]/5' : 'bg-[#f59e0b]/10 text-amber-900 shadow-amber-900/5'}`} onClick={() => copyToClipboard(CA_ADDRESS)}>
+              <div className="text-[7px] opacity-40 mb-1 italic uppercase">Important Announcement</div>
+              <p className="break-words whitespace-pre-wrap leading-relaxed">Official Contract Address: {CA_ADDRESS}</p>
+              <div className="mt-2 flex items-center gap-2 opacity-40 text-[7px] font-black uppercase">
+                 {copiedCA ? <><Check size={8} /> Copied</> : <><Copy size={8}/> Tap to copy</>}
+              </div>
+           </div>
+        </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar relative scroll-smooth">
-        {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center opacity-10 gap-2">
-            <Activity size={24} className="animate-pulse" />
-            <span className="text-[9px] uppercase tracking-widest">Scanning signals...</span>
-          </div>
-        )}
         {messages.map((msg) => {
           const isMe = msg.uid === user?.uid;
+          const hasReactions = msg.reactions && Object.values(msg.reactions).some(v => v > 0);
           return (
-            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in`}>
-              <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
-                 <div className="w-4 h-4 rounded-sm overflow-hidden bg-zinc-800">
-                    <img src={msg.avatar || AVATAR_LIST[5].url} className="w-full h-full object-cover" alt="" />
-                 </div>
-                 <span className="text-[8px] font-black uppercase tracking-tighter" style={{ color: msg.color }}>{msg.user}</span>
+            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} onTouchStart={(e) => handleTouchStart(e, msg)} onTouchMove={handleTouchMove} onTouchEnd={() => clearTimeout(longPressTimer.current)} onDoubleClick={() => handleReaction(msg.id, 'heart')}>
+              <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}><img src={msg.avatar} className="w-4 h-4 object-cover opacity-60 rounded-sm" alt="" /><span className="text-[8px] font-black uppercase tracking-tighter opacity-60" style={{ color: msg.color }}>{msg.user}</span></div>
+              <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all shadow-sm ${isMe ? (darkMode ? 'bg-white text-black border-white shadow-white/5' : 'bg-black text-white border-black shadow-black/5') : (darkMode ? 'bg-white/5 text-white border-white/20' : 'bg-black/5 text-black border-black/10')}`}>
+                 {msg.replyTo && (
+                   <div className="text-[7px] opacity-40 mb-2 border-l-2 border-current pl-2 truncate italic bg-current bg-opacity-5 p-1">
+                      Replied to {msg.replyTo.user}: "{msg.replyTo.text}"
+                   </div>
+                 )}
+                 <p className="break-words whitespace-pre-wrap leading-relaxed">{msg.text}</p>
               </div>
-              <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all ${isMe ? (darkMode ? 'bg-white text-black border-white' : 'bg-black text-white border-black') : (darkMode ? 'bg-white/5 text-white border-white/20' : 'bg-black/5 text-black border-black/10')}`}>
-                 <p className="break-words whitespace-pre-wrap">{msg.text}</p>
-              </div>
-              <div className={`flex gap-3 mt-2 transition-opacity ${isMe ? 'justify-end' : 'justify-start'}`}>
-                 <button onClick={() => handleReaction(msg.id, 'heart')} className="text-[8px] opacity-40 hover:opacity-100">❤️ {msg.reactions?.heart || ''}</button>
-                 <button onClick={() => handleReaction(msg.id, 'up')} className="text-[8px] opacity-40 hover:opacity-100">👌 {msg.reactions?.up || ''}</button>
-              </div>
+              {hasReactions && <div className={`flex gap-2 mt-2 ${isMe ? 'justify-end' : 'justify-start'}`}>{Object.entries(msg.reactions).map(([key, count]) => count > 0 && <button key={key} onClick={(e) => { e.stopPropagation(); handleReaction(msg.id, key); }} className="bg-current bg-opacity-10 px-2 py-1 rounded-full text-[8px] flex items-center gap-1 font-black shadow-sm transition-all hover:scale-110 active:scale-125">{key === 'heart' ? '❤️' : '👌'} <span>{count}</span></button>)}</div>}
             </div>
           );
         })}
       </div>
-
-      {activeMenu === 'settings' && (
-        <div className={`absolute top-12 right-4 z-50 p-4 border-2 shadow-2xl flex flex-col gap-4 animate-fade-in ${darkMode ? 'bg-[#080808] border-white/10' : 'bg-white border-black/5'}`}>
-           <button onClick={handleAppearanceChange} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-widest transition-opacity hover:opacity-100 ${darkMode ? 'text-white/60' : 'text-black/60'}`}>
-              <Palette size={14}/> Change Appearance
-           </button>
-           <div className={`h-[1px] w-full ${darkMode ? 'bg-white/10' : 'bg-black/5'}`} />
-           <button onClick={handleLogout} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">
-              <LogOut size={14}/> Log Out
-           </button>
+      {showScrollDown && (
+        <button onClick={() => scrollToBottom()} className={`absolute bottom-24 right-6 z-[70] p-3 rounded-full shadow-2xl animate-bounce hover:opacity-80 transition-opacity ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
+           <ChevronDown size={20} strokeWidth={3}/>
+        </button>
+      )}
+      {contextMenu && (
+        <div className={`fixed z-[1000] p-1 border-2 shadow-2xl min-w-[140px] animate-scale-up ${darkMode ? 'bg-[#080808] border-white/10' : 'bg-white border-black/5'}`} style={{ top: Math.min(contextMenu.y, window.innerHeight - 150), left: Math.min(contextMenu.x, window.innerWidth - 150) }} onClick={e => e.stopPropagation()}>
+           <button onClick={() => { setReplyingTo(contextMenu.msg); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-2 text-[10px] font-black uppercase hover:bg-current hover:text-current-bg transition-colors"><Reply size={12}/> Reply</button>
+           <div className="h-[1px] w-full opacity-10 bg-current my-1" /><div className="flex p-1 gap-1">
+              <button onClick={() => handleReaction(contextMenu.msg.id, 'heart')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">❤️</button>
+              <button onClick={() => handleReaction(contextMenu.msg.id, 'up')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">👌</button>
+           </div>
         </div>
       )}
-
-      <div className="mt-4 pt-4 border-t border-current border-opacity-5">
-        <form onSubmit={handleSend} className="flex gap-2">
-           <input 
-             value={inputText}
-             onChange={(e) => setInputText(e.target.value)}
-             placeholder={isSending ? "Sending..." : "Say something..."}
-             disabled={isSending}
-             className={`flex-1 bg-transparent border-b-2 py-3 px-2 text-right outline-none text-[11px] font-black italic transition-all ${darkMode ? 'border-white/10 focus:border-white text-white' : 'border-black/10 focus:border-black text-black'}`}
-           />
-           <button type="submit" disabled={!inputText.trim() || isSending} className={`p-3 border transition-all ${darkMode ? 'border-white/10 hover:bg-white hover:text-black' : 'border-black/10 hover:border-black hover:text-white'} disabled:opacity-20`}>
-             <SendHorizontal size={18} />
-           </button>
-        </form>
+      {activeMenu === 'settings' && (
+        <div className={`absolute top-12 right-4 z-[90] p-4 border-2 shadow-2xl flex flex-col gap-4 animate-fade-in ${darkMode ? 'bg-[#080808] border-white/10 text-white' : 'bg-white border-black/5 text-black'}`}>
+           <button onClick={() => { setIsSetup(false); setActiveMenu(null); }} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity"><Palette size={14}/> Change Appearance</button>
+           <div className={`h-[1px] w-full opacity-10 bg-current`} /><button onClick={() => { localStorage.clear(); window.location.reload(); }} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors"><LogOut size={14}/> Log Out</button>
+        </div>
+      )}
+      <div className="mt-4 pt-4 border-t border-current border-opacity-5 relative z-[80]">
+        {replyingTo && <div className="flex justify-between items-center bg-current bg-opacity-5 p-2 mb-2 border-r-4 border-current animate-fade-in"><span className="text-[8px] uppercase font-black italic opacity-60 truncate pr-6">Replying to {replyingTo.user}</span><X size={10} className="cursor-pointer opacity-40 hover:opacity-100 transition-opacity" onClick={() => setReplyingTo(null)} /></div>}
+        <form onSubmit={handleSend} className="flex gap-2"><input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={isSending ? "Sending..." : "Say something..."} disabled={isSending} className={`flex-1 bg-transparent border-b-2 py-3 px-2 text-right outline-none text-[11px] font-black italic transition-all ${darkMode ? 'border-white/10 focus:border-white text-white' : 'border-black/10 focus:border-black text-black'}`} /><button type="submit" disabled={!inputText.trim() || isSending} className={`p-3 border transition-all ${darkMode ? 'border-white/10 hover:bg-white hover:text-black' : 'border-black/10 hover:border-black hover:text-white'} disabled:opacity-20`}><SendHorizontal size={18} /></button></form>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }` }} />
     </div>
   );
 };
