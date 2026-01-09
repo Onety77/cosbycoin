@@ -493,7 +493,9 @@ const App = () => {
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
       6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
       7. Leave the remaining 70% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
-      8. The goal is to make the subject look like they are fleeing to the far right. The final output must be a panoramic 4:1 artifact.`;
+      8. The goal is to make the subject look like they are fleeing to the far right. The final output must be a panoramic 4:1 artifact.
+      9. finally on top of that whole free space/background, write "MAKE IT RIGHT", ugly handwriting, hand drawn vibes, fiting color with a white stroke around the leeters, make it fun and match the background vibes.
+      `;
 
       const fetchWithRetry = async (retries = 5, delay = 1000) => {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
@@ -635,7 +637,7 @@ const App = () => {
                       {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />}
                       <div className="relative z-10 flex flex-col items-center gap-2">
                         <ImageIcon size={20} className="opacity-40" />
-                        <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme Source</span>
+                        <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme</span>
                       </div>
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
