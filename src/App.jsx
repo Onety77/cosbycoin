@@ -629,7 +629,7 @@ const App = () => {
             {view === 'world' ? (
               <div className="w-full space-y-16">
                 <div className="space-y-6 flex flex-col items-end w-full">
-                  <div className="flex items-center gap-2 opacity-30 text-[9px] font-black uppercase tracking-widest"><Cpu size={12} /> Artifact_Architect</div>
+                  <div className="flex items-center gap-2 opacity-30 text-[9px] font-black uppercase tracking-widest"><Cpu size={12} /> Rightify</div>
                   <div className="w-full space-y-6">
                     <label className={`w-full h-40 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden ${darkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/10 hover:bg-black/5'}`}>
                       {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />}
@@ -660,7 +660,7 @@ const App = () => {
                         <button onClick={(e) => {
                           e.stopPropagation();
                           downloadArtifact();
-                        }} className="mt-4 text-[9px] font-black uppercase border-b border-current pb-1 opacity-40 hover:opacity-100 transition-opacity">Save Artifact</button>
+                        }} className="mt-4 text-[9px] font-black uppercase border-b border-current pb-1 opacity-40 hover:opacity-100 transition-opacity">Save</button>
                       </div>
                     )}
                   </div>
@@ -714,7 +714,7 @@ const App = () => {
         <div className="fixed inset-0 z-[100] flex justify-end backdrop-blur-xl bg-black/60 p-4 md:p-12 lg:p-24" onClick={() => setShowModal(false)}>
            <div className="w-full max-w-5xl h-fit my-auto bg-black border-r-[24px] border-white/10 p-4 shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowModal(false)} className="absolute -top-12 right-0 text-white/40 uppercase font-black text-[10px] tracking-widest flex items-center gap-2 hover:text-white transition-colors">
-                Close Artifact <X size={14}/>
+                Close <X size={14}/>
               </button>
               <img src={generatedMeme} className="w-full h-auto" alt="" />
            </div>
