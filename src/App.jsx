@@ -489,10 +489,8 @@ const App = () => {
       1. Reference Image 1 (User Meme) and Image 2 (Wide Template).
       2. Use Image 2 as your rigid canvas for the final output size and ratio.
       3. EXTRACT ONLY THE MAIN SUBJECT from Image 1. 
-     4. Re-interpret the original background of Image 1 by redrawing it entirely in a messy, hand-drawn digital sketch style, then extend that same sketched background to fill the full Image 2 canvas.
-The entire background must be rendered in one continuous illustrated style, with no photorealistic areas and no visible transition between original and extended regions.
-It should feel like a single hand-drawn scene, not an edited or patched image, and must fill the whole frame.
-
+     4. DISCARD the original background pixels of Image 1. Using only the layout and shapes of Image 1 as a reference, OVERWRITE the entire canvas with a single, unified, messy digital sketch. There must be NO photographic elements remaining; the entire background must be rendered in one consistent, sketchy hand-drawn style from edge to edge, ensuring the subject on the right feels placed inside a complete drawing.
+     
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
       6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
       7. Leave the remaining 70%% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
