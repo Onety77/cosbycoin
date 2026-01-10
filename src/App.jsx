@@ -557,9 +557,9 @@ const App = () => {
 
       <main className="flex flex-col items-end space-y-12 mb-20 w-full">
         <div className="space-y-1 flex flex-col items-end font-mono text-right">
-          <p className="text-[14px] font-bold tracking-tight italic opacity-80 transition-all hover:translate-x-[-4px]">this wasn’t promoted.</p>
-          <p className="text-[14px] font-bold tracking-tight italic opacity-60 transition-all hover:translate-x-[-4px]">it wasn’t rushed.</p>
-          <p className="text-[14px] font-bold tracking-tight italic opacity-40 transition-all hover:translate-x-[-4px]">it didn’t ask for attention.</p>
+          <p className="text-[14px] font-bold tracking-tight italic opacity-80 transition-all hover:translate-x-[-4px]">quietly built.</p>
+          <p className="text-[14px] font-bold tracking-tight italic opacity-60 transition-all hover:translate-x-[-4px]">slowly found.</p>
+          <p className="text-[14px] font-bold tracking-tight italic opacity-40 transition-all hover:translate-x-[-4px]">rightfully held.</p>
           
           <div className="flex flex-col items-end gap-3 mt-10">
             <button 
@@ -579,8 +579,9 @@ const App = () => {
 
         <div className="w-full flex flex-col items-end space-y-10 group/asset overflow-hidden">
           <div className="text-right w-full overflow-hidden relative">
-            <span className={`absolute top-0 right-0 text-[clamp(1.5rem,8vw,3rem)] font-black italic tracking-tighter leading-none opacity-5 transition-all duration-700 group-hover:translate-x-4 group-hover:-translate-y-2 max-w-full truncate`}>$RIGHTCOIN</span>
-            <span className="relative z-10 text-[clamp(1.5rem,8vw,3rem)] font-black italic tracking-tighter leading-none select-all block transition-all hover:tracking-normal max-w-full truncate">$RIGHTCOIN</span>
+            <span className={`absolute top-0 right-0 text-[clamp(1.5rem,8vw,3rem)] font-black italic tracking-tighter leading-none opacity-5 transition-all duration-700 group-hover:translate-x-4 group-hover:-translate-y-2 max-w-full truncate`}>RIGHTCOIN</span>
+            <span className="relative z-10 text-[clamp(1rem,8vw,1.5rem)] font-black italic tracking-tighter leading-none select-all block transition-all hover:tracking-normal max-w-full truncate">RIGHTCOIN</span>
+            <span className="relative z-10 text-[clamp(0.4rem,8vw,0.9rem)] font-light italic tracking-tighter leading-none select-all block transition-all hover:tracking-normal max-w-full truncate">built for the conviction of the few</span>
             <div className="h-[1px] w-full bg-current mt-4 opacity-10" />
           </div>
 
