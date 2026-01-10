@@ -496,9 +496,10 @@ const App = () => {
 
       8. On top of the newly drawn background, add a small, hand-written, sketchy text element that feels naturally placed in the composition.
 The text must include the word “right”, but must never be the same phrase twice.
-Generate a short quote that subtly responds to the subject’s pose, mood, or context in the image.
+Generate a short powerful positive quote that subtly responds to the subject’s pose, mood, or context in the image.
 Use imperfect, ugly handwriting with hand-drawn energy, artsy and organic, matching the background’s color palette and texture.
 The placement should feel accidental yet intentional — like it was scribbled by a human after looking at the image.
+If the generated quote does not sound natural when read aloud, regenerate it.
 
       9. The goal is to make the subject look like they are fleeing to the far right. The final output must be a panoramic 4:1 artifact. 
       10. NO BORDER. IT IS CRUCIAL THAT THE OUPUT SIZE IS IMAGE 2 SIZE (WIDE TEMPLATE). 
