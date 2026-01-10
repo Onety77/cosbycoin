@@ -146,7 +146,7 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
   const adminRef = useRef(null);
   const longPressTimer = useRef(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
-  const CA_ADDRESS = "0xRIGHT_COIN_CONTRACT_ADDRESS_TBA";
+  const CA_ADDRESS = "Coming Soon...";
 
   // 1. Auth Sync
   useEffect(() => {
