@@ -489,7 +489,7 @@ const App = () => {
       1. Reference Image 1 (User Meme) and Image 2 (Wide Template).
       2. Use Image 2 as your rigid canvas for the final output size and ratio.
       3. EXTRACT ONLY THE MAIN SUBJECT from Image 1. 
-      4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital sketch style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
+      4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital paint style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
       6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
       7. Leave the remaining 70%% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
