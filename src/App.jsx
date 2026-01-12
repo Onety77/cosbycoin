@@ -2,7 +2,8 @@ import React, {
   useState, 
   useEffect, 
   useRef, 
-  useMemo 
+  useMemo,
+  useCallback
 } from 'react';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -60,11 +61,21 @@ import {
   Activity,
   Check,
   ChevronDown,
-  ShieldAlert
+  ShieldAlert,
+  BarChart3,
+  HeartHandshake,
+  CheckCircle2,
+  TrendingUp,
+  Lock,
+  Unlock,
+  Wallet,
+  History,
+  ArrowUpRight,
+  ExternalLink
 } from 'lucide-react';
 
 
-// --- FIREBASE CONFIGURATION ---
+// --- CONFIGURATION ---
 const firebaseConfig = {
   apiKey: "AIzaSyB_gNokFnucM2nNAhhkRRnPsPNBAShYlMs",
   authDomain: "it-token.firebaseapp.com",
@@ -78,6 +89,8 @@ const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : get
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const appId = 'it-token-os';
+
+const SOL_CA = "So11111111111111111111111111111111111111112";
 
 const apiKey = (() => {
   try {
@@ -123,6 +136,339 @@ const CHAT_PLAYLIST = [
   { title: "MEME_IT", file: "MEME_IT.mp3" }
 ];
 
+const RPC_ENDPOINTS = [
+  'https://api.mainnet-beta.solana.com',
+  'https://solana-mainnet.rpc.extrnode.com',
+  'https://rpc.ankr.com/solana',
+  'https://api.solana.com',
+  'https://solana-rpc.publicnode.com'
+];
+
+const GOV_WALLET_ADDRESSES = {
+  DEV: "D8n8Dy6DWC9691mR4NroSA9TdxXBxDV6Rr639RapanS4",
+  CHARITY: "D8n8Dy6DWC9691mR4NroSA9TdxXBxDV6Rr639RapanS4",
+  MARKETING: "MARKETING_WALLET_ADDRESS_TBA"
+};
+
+const GOVERNANCE_HISTORY = [
+  { id: 1, date: "2024-01-12", type: "Marketing", task: "Paid DexScreener Spotlight", amount: "2.0 SOL", status: "Verified" },
+  { id: 2, date: "2024-01-11", type: "Charity", task: "Safe Water Initiative", amount: "5.0 SOL", status: "Verified" },
+];
+
+// --- GOVERNANCE MODULE ---
+const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
+  const [votes, setVotes] = useState({ c1: 0, c2: 0, m1: 0, m2: 0 });
+  const [solPrice, setSolPrice] = useState(0);
+  const [tokenData, setTokenData] = useState({ price: "$0.00", symbol: "IT" });
+  const [loading, setLoading] = useState(true);
+  const [balances, setBalances] = useState({ dev: 0, charity: 0, marketing: 0 });
+  const [allocatedBalance, setAllocatedBalance] = useState(0); 
+  const [copied, setCopied] = useState(false);
+
+  const charityTask = { 
+    id1: 'c1', name1: 'Save Children', link1: 'https://www.savethechildren.org',
+    id2: 'c2', name2: 'Ocean Clean', link2: 'https://theoceancleanup.com',
+    target: 5 
+  };
+  const marketingTask = { 
+    id1: 'm1', name1: 'Dex Ads',
+    id2: 'm2', name2: 'Elite Raids',
+    target: 10 
+  };
+
+  // 1. DexScreener Price Fetcher
+  const fetchPrice = useCallback(async () => {
+    if (!tokenCA || tokenCA.length < 32) return;
+    try {
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenCA}`);
+      if (!response.ok) return;
+      const result = await response.json();
+      if (result.pairs && result.pairs[0]) {
+        setTokenData({
+          price: `$${parseFloat(result.pairs[0].priceUsd).toFixed(6)}`,
+          symbol: result.pairs[0].baseToken.symbol
+        });
+      }
+    } catch (err) { console.error("Price sync issue", err); }
+  }, [tokenCA]);
+
+  // 2. Solana Balance Fetcher
+  const fetchSolBalance = useCallback(async (address) => {
+    if (!address || address.includes("_TBA")) return 0;
+    for (const endpoint of RPC_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Math.floor(Math.random() * 1000000),
+            method: "getBalance",
+            params: [address, { commitment: "confirmed" }]
+          })
+        });
+        const data = await response.json();
+        if (data.result && typeof data.result.value !== 'undefined') {
+          return Number(data.result.value) / 1e9;
+        }
+      } catch (err) { continue; }
+    }
+    return 0;
+  }, []);
+
+  const updateAllData = useCallback(async () => {
+    const [d, c, m] = await Promise.all([
+      fetchSolBalance(GOV_WALLET_ADDRESSES.DEV),
+      fetchSolBalance(GOV_WALLET_ADDRESSES.CHARITY),
+      fetchSolBalance(GOV_WALLET_ADDRESSES.MARKETING)
+    ]);
+    setBalances({ dev: d, charity: c, marketing: m });
+    fetchPrice();
+    
+    try {
+      const resp = await fetch('https://api.jup.ag/price/v2?ids=' + SOL_CA);
+      const data = await resp.json();
+      const val = data.data?.[SOL_CA]?.price;
+      if (val) setSolPrice(Number(val));
+    } catch (e) {}
+  }, [fetchSolBalance, fetchPrice]);
+
+  useEffect(() => {
+    updateAllData();
+    const interval = setInterval(updateAllData, 30000);
+    return () => clearInterval(interval);
+  }, [updateAllData]);
+
+  // 3. Persistent Firestore Sync
+  useEffect(() => {
+    if (!db || !auth) return;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+
+      const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
+      const unsubSnap = onSnapshot(govDoc, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.votes) setVotes(data.votes);
+          setAllocatedBalance(Number(data.allocatedBalance) || 0);
+        } else {
+          setDoc(govDoc, { votes: { c1: 0, c2: 0, m1: 0, m2: 0 }, allocatedBalance: 0 });
+        }
+        setLoading(false);
+      }, (err) => {
+        console.error("Ledger Sync Failure", err);
+        setLoading(false);
+      });
+
+      return () => unsubSnap();
+    });
+
+    return () => unsubAuth();
+  }, [db, auth, appId]);
+
+  // 4. Handle Vote with Exclusive Logic
+  const handleVote = async (category, taskId) => {
+    if (!auth?.currentUser) return;
+    
+    const storageKey = `right_vote_${category}`;
+    const previousVote = localStorage.getItem(storageKey);
+    const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
+
+    try {
+      if (previousVote === taskId) {
+        // Toggle off: Dislike what was already liked
+        await updateDoc(govDoc, { [`votes.${taskId}`]: increment(-1) });
+        localStorage.removeItem(storageKey);
+      } else if (previousVote) {
+        // Exclusive Switch: Remove previous, add current
+        await updateDoc(govDoc, { 
+          [`votes.${previousVote}`]: increment(-1),
+          [`votes.${taskId}`]: increment(1)
+        });
+        localStorage.setItem(storageKey, taskId);
+      } else {
+        // Fresh vote
+        await updateDoc(govDoc, { [`votes.${taskId}`]: increment(1) });
+        localStorage.setItem(storageKey, taskId);
+      }
+    } catch (e) { console.error("Vote failed", e); }
+  };
+
+  const copyToClipboard = (text) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = String(text);
+    document.body.appendChild(textArea);
+    textArea.select();
+    try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (err) {}
+    document.body.removeChild(textArea);
+  };
+
+  const ProgressCard = ({ title, balance, target, icon: Icon, color }) => {
+    const val = Number(balance) || 0;
+    const progress = Math.min((val / target) * 100, 100);
+    const isUnlocked = val >= target;
+
+    return (
+      <div className={`p-5 border-l-4 mb-3 transition-all ${darkMode ? 'bg-white/5 border-white/5 hover:bg-white/[0.07]' : 'bg-black/5 border-black/5 hover:bg-black/[0.07]'}`}>
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded ${darkMode ? 'bg-white/10' : 'bg-black/10'}`}>
+              <Icon size={16} style={{ color: isUnlocked ? color : 'inherit' }} />
+            </div>
+            <div className="text-left">
+              <h4 className="text-[8px] font-black uppercase tracking-widest opacity-40">{title}</h4>
+              <p className="text-lg font-black italic tracking-tighter leading-none mt-1">{val.toFixed(2)} SOL</p>
+              <p className="text-[7px] opacity-20 font-bold mt-1">USD ≈ ${(val * solPrice).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+            </div>
+          </div>
+          <div className={`flex items-center gap-2 text-[7px] font-black uppercase px-2 py-1 rounded transition-colors ${isUnlocked ? 'bg-green-500 text-black' : 'opacity-20 bg-current'}`}>
+            {isUnlocked ? <Unlock size={8} /> : <Lock size={8} />} {isUnlocked ? 'Decision Open' : 'Funding'}
+          </div>
+        </div>
+        <div className="space-y-1">
+          <div className={`w-full h-1 overflow-hidden rounded-full ${darkMode ? 'bg-white/10' : 'bg-black/10'}`}>
+            <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${progress}%`, backgroundColor: color }} />
+          </div>
+          <div className="flex justify-between text-[6px] font-black uppercase opacity-20">
+            <span>Goal: {target} SOL</span>
+            <span>{progress.toFixed(0)}% Complete</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) return (
+    <div className="w-full h-64 flex flex-col items-center justify-center opacity-20 font-mono text-center">
+      <Activity size={32} className="animate-spin mb-4" />
+      <p className="text-[10px] font-black uppercase tracking-[0.4em]">Intercepting Ledger...</p>
+    </div>
+  );
+
+  return (
+    <div className="w-full space-y-10 animate-fade-in font-mono pb-10 select-none">
+      
+      {/* 1. VAULT HEADER */}
+      <div className="flex justify-between items-end border-b border-current border-opacity-10 pb-4">
+        <div className="flex items-center gap-3">
+          <BarChart3 size={18} className="opacity-40" />
+          <h3 className="text-xl font-black italic uppercase tracking-tighter">The Ledger</h3>
+        </div>
+        <div className="text-right">
+          <p className="text-[8px] font-black uppercase opacity-30">Current Value</p>
+          <p className="text-sm font-black italic text-green-500">{String(tokenData.price)}</p>
+        </div>
+      </div>
+
+      {/* 2. ADMIN SIGNAL (RESTORED & MINIMAL) */}
+      <div className="flex flex-col items-start w-full gap-2 p-3 border border-[#f59e0b]/20 bg-[#f59e0b]/5">
+         <div className="flex items-center gap-2">
+            <img src="/pfps/mask.jpg" className="w-4 h-4 object-cover grayscale rounded-full border border-[#f59e0b]" alt="" />
+            <span className="text-[7px] font-black uppercase tracking-widest text-[#f59e0b]">Official Notice</span>
+         </div>
+         <p className="text-[8px] font-bold uppercase leading-tight opacity-70 tracking-tighter text-left">
+           Creator rewards are mirrored below. Voting unlocks upon reaching budget targets. All moves community governed.
+         </p>
+      </div>
+
+      {/* 3. DUAL BALANCES (Cleaned) */}
+      <div className="space-y-4">
+        <div className={`p-6 border-r-8 mb-4 border-[#f59e0b] relative flex flex-col gap-6 ${darkMode ? 'bg-[#f59e0b]/5 shadow-[0_0_40px_rgba(245,158,11,0.1)]' : 'bg-[#f59e0b]/10'}`}>
+          <div className="text-left">
+             <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">I. Fee Balance</span>
+             <p className="text-2xl font-black italic tracking-tighter leading-none mt-1">{Number(balances.dev || 0).toFixed(2)} SOL</p>
+          </div>
+          <div className="text-left">
+             <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">II. Allocated</span>
+             <p className="text-2xl font-black italic tracking-tighter leading-none mt-1">{Number(allocatedBalance || 0).toFixed(2)} SOL</p>
+          </div>
+          <div className="absolute top-4 right-4 opacity-10"><Shield size={24}/></div>
+        </div>
+
+        <ProgressCard title="Charity Choice" balance={balances.charity} target={charityTask.target} icon={HeartHandshake} color="#10b981" />
+        <ProgressCard title="Strategy Growth" balance={balances.marketing} target={marketingTask.target} icon={TrendingUp} color="#3b82f6" />
+      </div>
+      
+      {/* 4. BALLOT SYSTEM */}
+      <div className="space-y-12 pt-4">
+        {/* Charity Ballot */}
+        <div className={`space-y-4 ${Number(balances.charity) < charityTask.target ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
+           <span className="text-[9px] font-black uppercase tracking-widest border-b border-current border-opacity-10 pb-2 block text-left flex items-center justify-between">
+              Choice Distribution <span>{Number(balances.charity) < charityTask.target ? <Lock size={10}/> : 'Open'}</span>
+           </span>
+           <div className="grid grid-cols-2 gap-3">
+              {[
+                {id: charityTask.id1, name: charityTask.name1, link: charityTask.link1}, 
+                {id: charityTask.id2, name: charityTask.name2, link: charityTask.link2}
+              ].map(item => (
+                <div key={item.id} className={`p-4 border-2 flex flex-col text-right transition-all group ${localStorage.getItem('right_vote_charity') === item.id ? 'border-[#10b981] bg-[#10b981]/5' : 'border-white/5 bg-white/[0.02]'}`}>
+                   <div className="flex justify-between items-center mb-4">
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-current bg-opacity-10 hover:bg-opacity-20 transition-all text-current">
+                         <ExternalLink size={10} />
+                      </a>
+                      <span className="text-[7px] font-black uppercase opacity-30">Proposal</span>
+                   </div>
+                   <div className="text-[10px] font-black truncate uppercase mb-4">{item.name}</div>
+                   <button 
+                     onClick={() => handleVote('charity', item.id)}
+                     className={`w-full py-2 border border-current border-opacity-20 hover:bg-current hover:text-current-bg transition-all text-[8px] font-black uppercase flex justify-between px-2`}
+                   >
+                     {localStorage.getItem('right_vote_charity') === item.id ? 'REMOVE' : 'PICK'} 
+                     <span>{Number(votes[item.id]) || 0}</span>
+                   </button>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        {/* Marketing Ballot */}
+        <div className={`space-y-4 ${Number(balances.marketing) < marketingTask.target ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
+           <span className="text-[9px] font-black uppercase tracking-widest border-b border-current border-opacity-10 pb-2 block text-left flex items-center justify-between">
+              Growth Selection <span>{Number(balances.marketing) < marketingTask.target ? <Lock size={10}/> : 'Open'}</span>
+           </span>
+           <div className="grid grid-cols-2 gap-3">
+              {[
+                {id: marketingTask.id1, name: marketingTask.name1},
+                {id: marketingTask.id2, name: marketingTask.name2}
+              ].map(item => (
+                <div key={item.id} className={`p-4 border-2 flex flex-col text-right transition-all group ${localStorage.getItem('right_vote_marketing') === item.id ? 'border-[#3b82f6] bg-[#3b82f6]/5' : 'border-white/5 bg-white/[0.02]'}`}>
+                   <span className="text-[7px] font-black uppercase opacity-30 mb-4">Strategy</span>
+                   <div className="text-[10px] font-black truncate uppercase mb-4">{item.name}</div>
+                   <button 
+                     onClick={() => handleVote('marketing', item.id)}
+                     className={`w-full py-2 border border-current border-opacity-20 hover:bg-current hover:text-current-bg transition-all text-[8px] font-black uppercase flex justify-between px-2`}
+                   >
+                     {localStorage.getItem('right_vote_marketing') === item.id ? 'REMOVE' : 'APPLY'} 
+                     <span>{Number(votes[item.id]) || 0}</span>
+                   </button>
+                </div>
+              ))}
+           </div>
+        </div>
+      </div>
+
+      {/* 5. LOG */}
+      <div className="space-y-6 pt-6 border-t border-current border-opacity-10">
+        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-left opacity-40">Verified Artifacts</h4>
+        {GOVERNANCE_HISTORY.map(item => (
+          <div key={item.id} className="flex justify-between items-center py-3 border-b border-current border-opacity-5">
+            <div className="text-left">
+              <span className="text-[6px] opacity-30 uppercase font-black">{item.date} // {item.type}</span>
+              <p className="text-[9px] font-black uppercase tracking-tighter mt-0.5">{item.task}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-black italic">{item.amount}</p>
+              <p className="text-[7px] text-green-500 font-black uppercase italic mt-0.5 flex items-center gap-1"><Check size={8}/> Confirmed</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- CHAT MODULE (Integrated) ---
 const ChatApp = ({ db, auth, appId, darkMode }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
@@ -146,13 +492,12 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
   const adminRef = useRef(null);
   const longPressTimer = useRef(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
-  const CA_ADDRESS = "Coming Soon...";
+  const CA_INTERNAL = "3vsKvFYRbn5Mrfk5mJsxEDto2UwmrcWtqvC5o7SYpump";
 
-  // 1. Auth Sync
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       if (u) setUser(u);
-      else signInAnonymously(auth).catch(console.error);
+      else signInAnonymously(auth).catch(e => console.error("Auth Failure", e));
     });
     
     const savedName = localStorage.getItem('right_alias');
@@ -165,26 +510,21 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
     return () => unsubscribe();
   }, [auth]);
 
-  // 2. Database Listener
   useEffect(() => {
     if (!user || !db) return;
     const msgCollection = collection(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages');
-    
     const unsubscribe = onSnapshot(msgCollection, (snapshot) => {
       const msgs = snapshot.docs.map(doc => {
         const data = doc.data();
         let ts = data.timestamp?.toDate ? data.timestamp.toDate().getTime() : (data.timestamp || Date.now());
         return { id: doc.id, ...data, _sortTs: ts };
       });
-      
       const sorted = msgs.sort((a, b) => a._sortTs - b._sortTs);
       setMessages(sorted.slice(-100)); 
-    });
-
+    }, (err) => console.error("Signal Sync Error", err));
     return () => unsubscribe();
   }, [user, db, appId]);
 
-  // 3. Audio logic
   useEffect(() => {
     if (!isSetup || isMuted || !CHAT_PLAYLIST[trackIndex]) {
       if (audioRef.current) audioRef.current.pause();
@@ -197,30 +537,13 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
     } else if (audioRef.current.src !== track.file) {
       audioRef.current.src = track.file;
     }
-    audioRef.current.play().catch(() => setIsMuted(true));
+    const playPromise = audioRef.current.play();
+    if (playPromise !== undefined) playPromise.catch(() => setIsMuted(true));
     audioRef.current.onended = () => setTrackIndex((prev) => (prev + 1) % CHAT_PLAYLIST.length);
   }, [isSetup, isMuted, trackIndex]);
 
   const scrollToBottom = (behavior = 'smooth') => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
-    }
-  };
-
-  const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    setShowScrollDown(scrollHeight - scrollTop - clientHeight > 300);
-  };
-
-  const copyToClipboard = (text) => {
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    setCopiedCA(true);
-    setTimeout(() => setCopiedCA(false), 2000);
+    if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior });
   };
 
   const handleReaction = async (msgId, emoji) => {
@@ -228,7 +551,6 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
     const storageKey = `reacted_${msgId}_${emoji}`;
     const hasReacted = localStorage.getItem(storageKey);
     const msgRef = doc(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages', msgId);
-    
     try {
       if (hasReacted) {
         await updateDoc(msgRef, { [`reactions.${emoji}`]: increment(-1) });
@@ -243,13 +565,11 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
   const handleSend = async (e) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !user || isSending) return;
-
     setIsSending(true);
     const text = inputText.trim();
     const reply = replyingTo;
     setInputText("");
     setReplyingTo(null);
-
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages'), {
         text,
@@ -277,19 +597,6 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
     localStorage.setItem('right_avatar', userAvatar);
     setIsSetup(true);
     setIsMuted(false);
-  };
-
-  const handleTouchStart = (e, msg) => {
-    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    longPressTimer.current = setTimeout(() => {
-      setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg });
-    }, 600);
-  };
-
-  const handleTouchMove = (e) => {
-    const moveX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
-    const moveY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
-    if (moveX > 10 || moveY > 10) clearTimeout(longPressTimer.current);
   };
 
   if (!isSetup) {
@@ -327,8 +634,8 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
   return (
     <div className="flex flex-col w-full h-[600px] animate-fade-in font-mono relative select-none" onClick={() => { setContextMenu(null); setActiveMenu(null); }}>
       <div className={`sticky top-0 z-[60] w-full px-4 py-2 border-b flex items-center justify-between backdrop-blur-md cursor-pointer transition-colors ${darkMode ? 'bg-black/80 border-white/10 hover:bg-white/5' : 'bg-white/80 border-black/5 hover:bg-black/5'}`} onClick={() => adminRef.current?.scrollIntoView({ behavior: 'smooth' })}>
-          <span className="text-[8px] font-black text-[#f59e0b] uppercase tracking-widest italic animate-pulse flex items-center gap-2"><ShieldAlert size={10}/> Pinned CA</span>
-          <span className="text-[7px] opacity-40 truncate px-4 font-bold">{CA_ADDRESS}</span>
+          <span className="text-[8px] font-black text-[#f59e0b] uppercase tracking-widest italic animate-pulse flex items-center gap-2"><ShieldAlert size={10}/> Pinned Announcement</span>
+          <span className="text-[7px] opacity-40 truncate px-4 font-bold">{CA_INTERNAL}</span>
           <Copy size={10} className="opacity-20" />
       </div>
       <div className={`flex justify-between items-center p-3 border-b mb-2 ${darkMode ? 'border-white/10' : 'border-black/5'}`}>
@@ -339,35 +646,29 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
          </div>
          <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu ? null : 'settings'); }} className="opacity-40 hover:opacity-100"><Settings size={16}/></button>
       </div>
-      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar relative scroll-smooth">
-        {/* PERMANENT ADMIN SIGNAL - Now styled as a standard chat item but with unique style */}
+      <div ref={scrollRef} onScroll={(e) => { const { scrollTop, scrollHeight, clientHeight } = e.currentTarget; setShowScrollDown(scrollHeight - scrollTop - clientHeight > 300); }} className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar relative scroll-smooth">
         <div ref={adminRef} className="flex flex-col items-start animate-fade-in w-full mb-4">
            <div className="flex items-center gap-2 mb-1">
               <img src="/pfps/mask.jpg" className="w-4 h-4 object-cover rounded-sm border border-[#f59e0b]/30" alt="" />
               <span className="text-[8px] font-black uppercase tracking-tighter text-[#f59e0b]">Admin</span>
-              <span className="text-[7px] opacity-20 uppercase font-black">[Official]</span>
+              <span className="text-[7px] opacity-20 uppercase font-black">[Verified]</span>
            </div>
-           <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all shadow-md cursor-pointer border-[#f59e0b] ${darkMode ? 'bg-[#f59e0b]/5 text-[#f59e0b] shadow-[#f59e0b]/5' : 'bg-[#f59e0b]/10 text-amber-900 shadow-amber-900/5'}`} onClick={() => copyToClipboard(CA_ADDRESS)}>
+           <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all shadow-md cursor-pointer border-[#f59e0b] ${darkMode ? 'bg-[#f59e0b]/5 text-[#f59e0b]' : 'bg-[#f59e0b]/5 shadow-[#f59e0b]/5'} ${darkMode ? 'bg-[#f59e0b]/5' : 'bg-[#f59e0b]/10 text-amber-900'}`} onClick={() => { const el = document.createElement('textarea'); el.value = CA_INTERNAL; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); setCopiedCA(true); setTimeout(() => setCopiedCA(false), 2000); }}>
               <div className="text-[7px] opacity-40 mb-1 italic uppercase">Important Announcement</div>
-              <p className="break-words whitespace-pre-wrap leading-relaxed">Official Contract Address: {CA_ADDRESS}</p>
+              <p className="break-words whitespace-pre-wrap leading-relaxed">Official Contract Address: {CA_INTERNAL}</p>
               <div className="mt-2 flex items-center gap-2 opacity-40 text-[7px] font-black uppercase">
                  {copiedCA ? <><Check size={8} /> Copied</> : <><Copy size={8}/> Tap to copy</>}
               </div>
            </div>
         </div>
-
         {messages.map((msg) => {
           const isMe = msg.uid === user?.uid;
           const hasReactions = msg.reactions && Object.values(msg.reactions).some(v => v > 0);
           return (
-            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} onTouchStart={(e) => handleTouchStart(e, msg)} onTouchMove={handleTouchMove} onTouchEnd={() => clearTimeout(longPressTimer.current)} onDoubleClick={() => handleReaction(msg.id, 'heart')}>
+            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }} onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onDoubleClick={() => handleReaction(msg.id, 'heart')}>
               <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}><img src={msg.avatar} className="w-4 h-4 object-cover opacity-60 rounded-sm" alt="" /><span className="text-[8px] font-black uppercase tracking-tighter opacity-60" style={{ color: msg.color }}>{msg.user}</span></div>
               <div className={`relative px-4 py-3 max-w-[85%] border-r-4 text-xs font-bold transition-all shadow-sm ${isMe ? (darkMode ? 'bg-white text-black border-white shadow-white/5' : 'bg-black text-white border-black shadow-black/5') : (darkMode ? 'bg-white/5 text-white border-white/20' : 'bg-black/5 text-black border-black/10')}`}>
-                 {msg.replyTo && (
-                   <div className="text-[7px] opacity-40 mb-2 border-l-2 border-current pl-2 truncate italic bg-current bg-opacity-5 p-1">
-                      Replied to {msg.replyTo.user}: "{msg.replyTo.text}"
-                   </div>
-                 )}
+                 {msg.replyTo && <div className="text-[7px] opacity-40 mb-2 border-l-2 border-current pl-2 truncate italic bg-current bg-opacity-5 p-1">Replied to {msg.replyTo.user}: "{msg.replyTo.text}"</div>}
                  <p className="break-words whitespace-pre-wrap leading-relaxed">{msg.text}</p>
               </div>
               {hasReactions && <div className={`flex gap-2 mt-2 ${isMe ? 'justify-end' : 'justify-start'}`}>{Object.entries(msg.reactions).map(([key, count]) => count > 0 && <button key={key} onClick={(e) => { e.stopPropagation(); handleReaction(msg.id, key); }} className="bg-current bg-opacity-10 px-2 py-1 rounded-full text-[8px] flex items-center gap-1 font-black shadow-sm transition-all hover:scale-110 active:scale-125">{key === 'heart' ? '❤️' : '👌'} <span>{count}</span></button>)}</div>}
@@ -375,18 +676,11 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
           );
         })}
       </div>
-      {showScrollDown && (
-        <button onClick={() => scrollToBottom()} className={`absolute bottom-24 right-6 z-[70] p-3 rounded-full shadow-2xl animate-bounce hover:opacity-80 transition-opacity ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
-           <ChevronDown size={20} strokeWidth={3}/>
-        </button>
-      )}
+      {showScrollDown && <button onClick={() => scrollToBottom()} className={`absolute bottom-24 right-6 z-[70] p-3 rounded-full shadow-2xl animate-bounce hover:opacity-80 transition-opacity ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}`}><ChevronDown size={20} strokeWidth={3}/></button>}
       {contextMenu && (
         <div className={`fixed z-[1000] p-1 border-2 shadow-2xl min-w-[140px] animate-scale-up ${darkMode ? 'bg-[#080808] border-white/10' : 'bg-white border-black/5'}`} style={{ top: Math.min(contextMenu.y, window.innerHeight - 150), left: Math.min(contextMenu.x, window.innerWidth - 150) }} onClick={e => e.stopPropagation()}>
            <button onClick={() => { setReplyingTo(contextMenu.msg); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-2 text-[10px] font-black uppercase hover:bg-current hover:text-current-bg transition-colors"><Reply size={12}/> Reply</button>
-           <div className="h-[1px] w-full opacity-10 bg-current my-1" /><div className="flex p-1 gap-1">
-              <button onClick={() => handleReaction(contextMenu.msg.id, 'heart')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">❤️</button>
-              <button onClick={() => handleReaction(contextMenu.msg.id, 'up')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">👌</button>
-           </div>
+           <div className="h-[1px] w-full opacity-10 bg-current my-1" /><div className="flex p-1 gap-1"><button onClick={() => handleReaction(contextMenu.msg.id, 'heart')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">❤️</button><button onClick={() => handleReaction(contextMenu.msg.id, 'up')} className="flex-1 p-2 hover:bg-current hover:text-current-bg transition-colors flex justify-center text-xs">👌</button></div>
         </div>
       )}
       {activeMenu === 'settings' && (
@@ -405,6 +699,8 @@ const ChatApp = ({ db, auth, appId, darkMode }) => {
 };
 
 
+
+// --- MAIN APP ---
 const App = () => {
   const [view, setView] = useState('home'); 
   const [copied, setCopied] = useState(false);
@@ -420,9 +716,14 @@ const App = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
 
+  // Sign in anonymously on mount to enable Firestore listeners
+  useEffect(() => {
+    signInAnonymously(auth).catch(console.error);
+  }, []);
+
   const copyToClipboard = (textToCopy) => {
     const textArea = document.createElement("textarea");
-    textArea.value = textToCopy;
+    textArea.value = String(textToCopy);
     textArea.style.position = "fixed";
     textArea.style.left = "-9999px";
     document.body.appendChild(textArea);
@@ -489,7 +790,7 @@ const App = () => {
       1. Reference Image 1 (User Meme) and Image 2 (Wide Template).
       2. Use Image 2 as your rigid canvas for the final output size and ratio.
       3. EXTRACT ONLY THE MAIN SUBJECT from Image 1. 
-      4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital paint style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
+      4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital sketch style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
       6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
       7. Leave the remaining 70%% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
@@ -576,6 +877,12 @@ If the generated quote does not sound natural when read aloud, regenerate it.
               Make things right <MoveRight size={14} />
             </button>
             <button 
+              onClick={() => setView('governance')}
+              className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
+            >
+              The Ledger <BarChart3 size={14} />
+            </button>
+            <button 
               onClick={() => setView('community')}
               className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}
             >
@@ -634,7 +941,7 @@ If the generated quote does not sound natural when read aloud, regenerate it.
                 />
               </div>
               <h3 className="text-3xl font-black italic uppercase border-r-8 border-current pr-4 leading-[0.8]">
-                {view === 'world' ? 'Make Things\nRight' : 'Right\nCommunity'}
+                {view === 'world' ? 'Make Things\nRight' : view === 'governance' ? 'The\nLedger' : 'Right\nCommunity'}
               </h3>
             </header>
 
@@ -647,18 +954,18 @@ If the generated quote does not sound natural when read aloud, regenerate it.
                       {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />}
                       <div className="relative z-10 flex flex-col items-center gap-2">
                         <ImageIcon size={20} className="opacity-40" />
-                        <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme</span>
+                        <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 text-center">Load Meme Source</span>
                       </div>
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                     
-                    {/* Make it right button - Persistent Visibility, Explicit Colors */}
+                    {/* PERSISTENT VISIBILITY BUTTON - SOLVES THE DISAPPEARING ISSUE */}
                     <button 
                       onClick={architectMeme} 
                       disabled={!uploadImage || isGenerating} 
-                      className={`w-full py-4 font-black uppercase text-[10px] tracking-[0.5em] disabled:opacity-30 active:translate-y-1 transition-all ${darkMode ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'}`}
+                      className={`w-full py-4 font-black uppercase text-[10px] tracking-[0.5em] active:translate-y-1 transition-all ${darkMode ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800'} disabled:opacity-30`}
                     >
-                      {isGenerating ? <><RefreshCw size={14} className="animate-spin inline mr-2" /> Processing...</> : "Make it right"}
+                      {isGenerating ? <><RefreshCw size={14} className="animate-spin inline mr-2" /> Processing Artifact...</> : "Make it right"}
                     </button>
                     
                     {error && <p className="text-red-500 text-[9px] font-black uppercase tracking-widest">{error}</p>}
@@ -672,12 +979,14 @@ If the generated quote does not sound natural when read aloud, regenerate it.
                         <button onClick={(e) => {
                           e.stopPropagation();
                           downloadArtifact();
-                        }} className="mt-4 text-[9px] font-black uppercase border-b border-current pb-1 opacity-40 hover:opacity-100 transition-opacity">Save</button>
+                        }} className="mt-4 text-[9px] font-black uppercase border-b border-current pb-1 opacity-40 hover:opacity-100 transition-opacity">Save Artifact</button>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+            ) : view === 'governance' ? (
+              <GovernanceModule db={db} auth={auth} appId={appId} darkMode={darkMode} tokenCA={ca} />
             ) : (
               <ChatApp db={db} auth={auth} appId={appId} darkMode={darkMode} />
             )}
@@ -726,7 +1035,7 @@ If the generated quote does not sound natural when read aloud, regenerate it.
         <div className="fixed inset-0 z-[100] flex justify-end backdrop-blur-xl bg-black/60 p-4 md:p-12 lg:p-24" onClick={() => setShowModal(false)}>
            <div className="w-full max-w-5xl h-fit my-auto bg-black border-r-[24px] border-white/10 p-4 shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowModal(false)} className="absolute -top-12 right-0 text-white/40 uppercase font-black text-[10px] tracking-widest flex items-center gap-2 hover:text-white transition-colors">
-                Close <X size={14}/>
+                Close Artifact <X size={14}/>
               </button>
               <img src={generatedMeme} className="w-full h-auto" alt="" />
            </div>
