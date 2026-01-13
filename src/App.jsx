@@ -176,7 +176,7 @@ const GOV_WALLET_ADDRESSES = {
   MARKETING: "MARKETING_WALLET_ADDRESS_TBA"
 };
 
-// --- GOVERNANCE MODULE ---
+// --- MODULE 1: GOVERNANCE MODULE ---
 export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
   const [votes, setVotes] = useState({ c1: 0, c2: 0, m1: 0, m2: 0 });
   const [solPrice, setSolPrice] = useState(0);
@@ -185,7 +185,7 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
   const [balances, setBalances] = useState({ dev: 0, charity: 0, marketing: 0 });
   const [ledgerData, setLedgerData] = useState({
     allocatedBalance: 0,
-    notice: "Creator rewards are mirrored below. Voting unlocks upon reaching budget targets. All moves community governed.",
+    notice: "Creator rewards are mirrored below. All moves community governed.",
     charityTask: { id1: 'c1', name1: '', link1: '', img1: '', id2: 'c2', name2: '', link2: '', img2: '', target: 5 },
     marketingTask: { id1: 'm1', name1: '', id2: 'm2', name2: '', target: 10 },
     history: []
@@ -203,7 +203,7 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
           symbol: result.pairs[0].baseToken.symbol
         });
       }
-    } catch (err) { console.error("Price fetch failed", err); }
+    } catch (err) { console.error("Price sync issue", err); }
   }, [tokenCA]);
 
   const fetchSolBalance = useCallback(async (address) => {
@@ -237,7 +237,6 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
     ]);
     setBalances({ dev: d, charity: c, marketing: m });
     fetchPrice();
-    
     try {
       const resp = await fetch('https://api.jup.ag/price/v2?ids=' + SOL_CA);
       const data = await resp.json();
@@ -257,7 +256,7 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (!user) return;
       const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
-      const unsubSnap = onSnapshot(govDoc, (snap) => {
+      return onSnapshot(govDoc, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
           if (data.votes) setVotes(data.votes);
@@ -271,20 +270,15 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
           setDoc(govDoc, { 
             votes: { c1: 0, c2: 0, m1: 0, m2: 0 }, 
             allocatedBalance: 0, 
-            notice: ledgerData.notice, 
-            charityTask: ledgerData.charityTask, 
-            marketingTask: ledgerData.marketingTask, 
+            notice: "Reviewing targets...", 
+            charityTask: { target: 5 }, 
+            marketingTask: { target: 10 }, 
             history: [] 
           });
         }
         setLoading(false);
-      }, (err) => {
-        console.error("Ledger Sync Failure", err);
-        setLoading(false);
       });
-      return () => unsubSnap();
     });
-    return () => unsubAuth();
   }, [db, auth, appId]);
 
   const handleVote = async (category, taskId) => {
@@ -294,18 +288,15 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
     const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
     try {
       if (previousVote === taskId) {
-        // Toggle Off
         await updateDoc(govDoc, { [`votes.${taskId}`]: increment(-1) });
         localStorage.removeItem(storageKey);
       } else if (previousVote) {
-        // Switch Vote: pick only one per category
         await updateDoc(govDoc, { 
           [`votes.${previousVote}`]: increment(-1),
           [`votes.${taskId}`]: increment(1)
         });
         localStorage.setItem(storageKey, taskId);
       } else {
-        // Fresh Vote
         await updateDoc(govDoc, { [`votes.${taskId}`]: increment(1) });
         localStorage.setItem(storageKey, taskId);
       }
@@ -364,52 +355,56 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
         </div>
       </div>
 
-      <div className="flex flex-col items-start w-full gap-2 p-3 border border-[#f59e0b]/20 bg-[#f59e0b]/5">
+      <div className="flex flex-col items-start w-full gap-2 p-3 border border-[#f59e0b]/20 bg-[#f59e0b]/5 text-left">
          <div className="flex items-center gap-2">
             <img src="/pfps/mask.jpg" className="w-4 h-4 object-cover grayscale rounded-full border border-[#f59e0b]" alt="" />
             <span className="text-[7px] font-black uppercase tracking-widest text-[#f59e0b]">Official Notice</span>
          </div>
-         <p className="text-[8px] font-bold uppercase leading-tight opacity-70 tracking-tighter text-left">
+         <p className="text-[8px] font-bold uppercase leading-tight opacity-70 tracking-tighter">
            {ledgerData.notice}
          </p>
       </div>
 
       <div className="space-y-4">
         <div className={`p-6 border-r-8 mb-4 border-[#f59e0b] relative flex flex-col gap-6 ${darkMode ? 'bg-[#f59e0b]/5 shadow-[0_0_40px_rgba(245,158,11,0.1)]' : 'bg-[#f59e0b]/10'}`}>
-          <div className="text-left">
+          <div className="text-left text-current">
              <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic leading-none">I. Fee Balance</span>
-             <p className="text-2xl font-black italic tracking-tighter leading-none mt-1">{Number(balances.dev || 0).toFixed(2)} SOL</p>
+             <p className="text-2xl font-black italic tracking-tighter mt-1 leading-none">{Number(balances.dev || 0).toFixed(2)} SOL</p>
           </div>
-          <div className="text-left">
+          <div className="text-left text-current">
              <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic leading-none">II. Allocated</span>
              <p className="text-2xl font-black italic tracking-tighter leading-none mt-1">{Number(ledgerData.allocatedBalance || 0).toFixed(2)} SOL</p>
           </div>
           <div className="absolute top-4 right-4 opacity-10"><Shield size={24}/></div>
         </div>
 
-        <ProgressCard title="Charity Choice" balance={balances.charity} target={ledgerData.charityTask.target} icon={HeartHandshake} color="#10b981" />
-        <ProgressCard title="Strategy Growth" balance={balances.marketing} target={ledgerData.marketingTask.target} icon={TrendingUp} color="#3b82f6" />
+        <ProgressCard title="Charity Choice" balance={balances.charity} target={ledgerData.charityTask.target || 5} icon={HeartHandshake} color="#10b981" />
+        <ProgressCard title="Strategy Growth" balance={balances.marketing} target={ledgerData.marketingTask.target || 10} icon={TrendingUp} color="#3b82f6" />
       </div>
       
       <div className="space-y-12 pt-4">
         {/* Charity Ballot */}
-        <div className={`space-y-4 ${Number(balances.charity) < ledgerData.charityTask.target ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
+        <div className={`space-y-4 ${Number(balances.charity) < (ledgerData.charityTask.target || 5) ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
            <span className="text-[9px] font-black uppercase tracking-widest border-b border-current border-opacity-10 pb-2 block text-left flex items-center justify-between">
-              Choice Distribution <span>{Number(balances.charity) < ledgerData.charityTask.target ? <Lock size={10}/> : 'Open'}</span>
+              Choice Distribution <span>{Number(balances.charity) < (ledgerData.charityTask.target || 5) ? <Lock size={10}/> : 'Open'}</span>
            </span>
            <div className="grid grid-cols-2 gap-3">
               {[ {id: 'c1', name: ledgerData.charityTask.name1, link: ledgerData.charityTask.link1, img: ledgerData.charityTask.img1}, {id: 'c2', name: ledgerData.charityTask.name2, link: ledgerData.charityTask.link2, img: ledgerData.charityTask.img2} ].map(item => (
                 <div key={item.id} className={`p-3 border-2 flex flex-col transition-all group ${localStorage.getItem('right_vote_charity') === item.id ? 'border-[#10b981] bg-[#10b981]/5' : 'border-white/5 bg-white/[0.02]'}`}>
-                   {item.img && <img src={item.img} className="w-full h-16 object-cover grayscale group-hover:grayscale-0 transition-all mb-3 border border-current border-opacity-10" alt="" />}
+                   {item.img && (
+                     <a href={item.link} target="_blank" rel="noopener noreferrer" className="block w-full overflow-hidden mb-3">
+                        <img src={item.img} className="w-full h-16 object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all border border-current border-opacity-10" alt="" />
+                     </a>
+                   )}
                    <div className="flex justify-between items-center mb-2 text-left">
-                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="p-1 rounded bg-current bg-opacity-10 hover:bg-opacity-20 transition-all text-current">
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-opacity">
                          <ExternalLink size={10} />
+                         <span className="text-[7px] font-black uppercase tracking-widest">Link</span>
                       </a>
-                      <span className="text-[7px] font-black uppercase opacity-30">Link</span>
                    </div>
-                   <div className="text-[10px] font-black truncate uppercase mb-4 text-right">{item.name || '---'}</div>
+                   <div className="text-[10px] font-black truncate uppercase mb-4 text-right text-current">{item.name || '---'}</div>
                    <button onClick={() => handleVote('charity', item.id)} className={`w-full py-1.5 border border-current border-opacity-20 hover:bg-current hover:text-current-bg transition-all text-[8px] font-black uppercase flex justify-between px-2`}>
-                     {localStorage.getItem('right_vote_charity') === item.id ? 'REMOVE' : 'PICK'} <span>{Number(votes[item.id]) || 0}</span>
+                     {localStorage.getItem('right_vote_charity') === item.id ? 'REMOVE' : 'VOTE'} <span>{Number(votes[item.id]) || 0}</span>
                    </button>
                 </div>
               ))}
@@ -417,17 +412,17 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
         </div>
 
         {/* Marketing Ballot */}
-        <div className={`space-y-4 ${Number(balances.marketing) < ledgerData.marketingTask.target ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
+        <div className={`space-y-4 ${Number(balances.marketing) < (ledgerData.marketingTask.target || 10) ? 'opacity-20 grayscale pointer-events-none' : ''}`}>
            <span className="text-[9px] font-black uppercase tracking-widest border-b border-current border-opacity-10 pb-2 block text-left flex items-center justify-between">
-              Growth Selection <span>{Number(balances.marketing) < ledgerData.marketingTask.target ? <Lock size={10}/> : 'Open'}</span>
+              Growth Selection <span>{Number(balances.marketing) < (ledgerData.marketingTask.target || 10) ? <Lock size={10}/> : 'Open'}</span>
            </span>
            <div className="grid grid-cols-2 gap-3">
               {[ {id: 'm1', name: ledgerData.marketingTask.name1}, {id: 'm2', name: ledgerData.marketingTask.name2} ].map(item => (
                 <div key={item.id} className={`p-4 border-2 flex flex-col text-right transition-all group ${localStorage.getItem('right_vote_marketing') === item.id ? 'border-[#3b82f6] bg-[#3b82f6]/5' : 'border-white/5 bg-white/[0.02]'}`}>
-                   <span className="text-[7px] font-black uppercase opacity-30 mb-4 text-right">Strategy</span>
-                   <div className="text-[10px] font-black truncate uppercase mb-4">{item.name || '---'}</div>
+                   <span className="text-[7px] font-black uppercase opacity-30 mb-4 text-left">Strategy</span>
+                   <div className="text-[10px] font-black truncate uppercase mb-4 text-current">{item.name || '---'}</div>
                    <button onClick={() => handleVote('marketing', item.id)} className={`w-full py-2 border border-current border-opacity-20 hover:bg-current hover:text-current-bg transition-all text-[8px] font-black uppercase flex justify-between px-2`}>
-                     {localStorage.getItem('right_vote_marketing') === item.id ? 'REMOVE' : 'APPLY'} <span>{Number(votes[item.id]) || 0}</span>
+                     {localStorage.getItem('right_vote_marketing') === item.id ? 'REMOVE' : 'VOTE'} <span>{Number(votes[item.id]) || 0}</span>
                    </button>
                 </div>
               ))}
@@ -436,14 +431,14 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
       </div>
 
       <div className="space-y-6 pt-6 border-t border-current border-opacity-10 text-left">
-        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-left opacity-40">Verified Signals</h4>
+        <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-left opacity-40">HISTORY</h4>
         {ledgerData.history && ledgerData.history.length > 0 ? ledgerData.history.map((item, idx) => (
           <div key={idx} className="flex justify-between items-center py-3 border-b border-current border-opacity-5 group/hist transition-all">
-            <div className="text-left">
+            <div className="text-left text-current">
               <span className="text-[6px] opacity-30 uppercase font-black">{item.date} // {item.type}</span>
               <p className="text-[9px] font-black uppercase tracking-tighter mt-0.5">{item.task}</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-current">
               <div className="text-right">
                 <p className="text-[9px] font-black italic leading-none">{item.amount}</p>
                 <p className="text-[6px] text-green-500 font-black uppercase italic mt-1 flex items-center gap-1 leading-none"><CheckCircle size={8}/> Confirmed</p>
@@ -456,7 +451,7 @@ export const GovernanceModule = ({ db, auth, appId, darkMode, tokenCA }) => {
             </div>
           </div>
         )) : (
-          <p className="text-[8px] opacity-20 uppercase font-bold text-center py-4 italic tracking-widest">No verified signals logged</p>
+          <p className="text-[8px] opacity-20 uppercase font-bold text-center py-4 italic tracking-widest text-current">AWAITING...</p>
         )}
       </div>
     </div>
@@ -739,8 +734,8 @@ export const ChatApp = ({ db, auth, appId, darkMode, setView }) => {
 };
 
 
-// --- MASTER ADMIN PANEL (God Mode) ---
-const MasterAdminPanel = ({ db, appId, setView }) => {
+// --- MODULE 2: MASTER ADMIN PANEL (God Mode) ---
+export const MasterAdminPanel = ({ db, appId, setView }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -748,42 +743,23 @@ const MasterAdminPanel = ({ db, appId, setView }) => {
   useEffect(() => {
     if (!db || !appId) return;
     const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
-    
-    const unsubscribe = onSnapshot(govDoc, (snap) => {
-      if (snap.exists()) {
-        setData(snap.data());
-      } else {
-        // Safe initialization defaults to prevent UI crash
-        setData({
-          notice: "Creator rewards are mirrored below.",
-          allocatedBalance: 0,
-          history: [],
-          charityTask: { id1: 'c1', name1: '', link1: '', img1: '', id2: 'c2', name2: '', link2: '', img2: '', target: 5 },
-          marketingTask: { id1: 'm1', name1: '', id2: 'm2', name2: '', target: 10 },
-          votes: { c1: 0, c2: 0, m1: 0, m2: 0 }
-        });
-      }
-      setLoading(false);
-    }, (err) => {
-      console.error("Master Sync Error", err);
+    return onSnapshot(govDoc, (snap) => {
+      if (snap.exists()) setData(snap.data());
       setLoading(false);
     });
-
-    return () => unsubscribe();
   }, [db, appId]);
 
   const save = async (updates) => {
     setSaving(true);
     const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
     try {
-      // Cast allocatedBalance to number if it's being updated
-      if (updates.allocatedBalance !== undefined) {
-        updates.allocatedBalance = Number(updates.allocatedBalance);
-      }
+      // FIX: Ensure numeric casting for inputs to prevent sync issues
+      if (updates.allocatedBalance !== undefined) updates.allocatedBalance = Number(updates.allocatedBalance);
+      if (updates.charityTask?.target !== undefined) updates.charityTask.target = Number(updates.charityTask.target);
+      if (updates.marketingTask?.target !== undefined) updates.marketingTask.target = Number(updates.marketingTask.target);
+      
       await updateDoc(govDoc, updates);
-    } catch (e) {
-      console.error("Save Error", e);
-    }
+    } catch (e) { console.error("Save Error", e); }
     setSaving(false);
   };
 
@@ -791,234 +767,128 @@ const MasterAdminPanel = ({ db, appId, setView }) => {
     const govDoc = doc(db, 'artifacts', appId, 'public', 'data', 'governance', 'state');
     const updates = { [`votes.${taskId}`]: 0 };
     if (category === 'charity') {
-      updates.charityTask = {
-        ...data.charityTask,
-        [taskId === 'c1' ? 'name1' : 'name2']: '',
-        [taskId === 'c1' ? 'link1' : 'link2']: '',
-        [taskId === 'c1' ? 'img1' : 'img2']: ''
-      };
+      updates.charityTask = { ...data.charityTask, [taskId === 'c1' ? 'name1' : 'name2']: '', [taskId === 'c1' ? 'link1' : 'link2']: '', [taskId === 'c1' ? 'img1' : 'img2']: '' };
     } else {
-      updates.marketingTask = {
-        ...data.marketingTask,
-        [taskId === 'm1' ? 'name1' : 'name2']: ''
-      };
+      updates.marketingTask = { ...data.marketingTask, [taskId === 'm1' ? 'name1' : 'name2']: '' };
     }
     await updateDoc(govDoc, updates);
   };
 
-  if (loading || !data) return (
-    <div className="p-20 text-center flex flex-col items-center justify-center gap-4">
-      <RefreshCw size={32} className="animate-spin opacity-40" />
-      <p className="font-mono uppercase text-[10px] tracking-widest opacity-40">Connecting to Master Node...</p>
-    </div>
-  );
+  if (loading || !data) return <div className="p-20 text-center opacity-40 font-mono uppercase text-xs animate-pulse">Syncing Master Node...</div>;
 
   return (
     <div className="w-full space-y-12 animate-fade-in font-mono pb-20 text-left">
-      <header className="flex justify-between items-center border-b border-red-500/20 pb-4">
-        <div className="flex items-center gap-3 text-red-500">
-          <Cpu size={20}/>
-          <h3 className="text-xl font-black italic uppercase">Admin</h3>
-        </div>
-        <button onClick={() => setView('home')} className="text-[9px] uppercase font-black opacity-40 hover:opacity-100 transition-opacity">Exit Panel</button>
-      </header>
+       <header className="flex justify-between items-center border-b border-red-500/20 pb-4">
+          <h3 className="text-xl font-black italic uppercase text-red-500 flex items-center gap-2"><Cpu size={20}/> ADMIN PANEL</h3>
+          <button onClick={() => setView('home')} className="text-[9px] uppercase font-black opacity-40 hover:opacity-100 transition-opacity">Exit Panel</button>
+       </header>
 
-      {/* 1. OFFICIAL ANNOUNCEMENT */}
-      <div className="p-6 border border-current border-opacity-10 bg-white/[0.02] space-y-4">
-        <div className="space-y-2">
-          <label className="text-[8px] font-black uppercase opacity-40 flex items-center gap-2">
-            <Activity size={10} /> Official Signal Announcement
-          </label>
-          <textarea 
-            value={data.notice || ""} 
-            onChange={e => setData({...data, notice: e.target.value})} 
-            className="w-full bg-white/5 border border-current border-opacity-10 p-3 text-[10px] font-bold h-20 outline-none focus:border-red-500/50"
-            placeholder="Update the announcement banner text..."
-          />
-        </div>
-        <button 
-          onClick={() => save({ notice: data.notice })} 
-          className="w-full py-2 bg-white text-black font-black uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all"
-        >
-          {saving ? <RefreshCw className="animate-spin" size={12}/> : <Save size={12}/>} Update Announcement
-        </button>
-      </div>
-
-      {/* 2. ALLOCATED SOL CONTROL */}
-      <div className="p-6 border border-current border-opacity-10 bg-white/[0.02] space-y-4">
-        <div className="space-y-2">
-          <label className="text-[8px] font-black uppercase opacity-40 flex items-center gap-2">
-            <Wallet size={10} /> Manual Allocation Amount
-          </label>
-          <input 
-            type="number" 
-            value={data.allocatedBalance === 0 ? "" : data.allocatedBalance} 
-            placeholder="0.00"
-            onChange={e => setData({...data, allocatedBalance: e.target.value === "" ? 0 : parseFloat(e.target.value)})} 
-            className="w-full bg-white/5 border border-current border-opacity-10 p-3 text-xs font-black outline-none focus:border-red-500/50" 
-          />
-        </div>
-        <button 
-          onClick={() => save({ allocatedBalance: data.allocatedBalance })} 
-          className="w-full py-2 bg-red-500 text-black font-black uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-red-400 transition-all"
-        >
-          {saving ? <RefreshCw className="animate-spin" size={12}/> : <Save size={12}/>} Sync Allocation
-        </button>
-      </div>
-
-      {/* 3. BALLOT MANAGEMENT */}
-      <div className="space-y-8 border-t border-current border-opacity-10 pt-8">
-        <div className="space-y-6">
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Proposals Configuration</span>
-          
-          {/* Charity Proposals */}
-          <div className="p-4 border border-dashed border-current border-opacity-20 space-y-6">
-            <span className="text-[8px] font-black uppercase opacity-40">Charity Voting Section</span>
-            <div className="space-y-8">
-              {['c1', 'c2'].map(id => (
-                <div key={id} className="space-y-3 border-b border-white/5 pb-6 text-left">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[7px] font-black opacity-30 uppercase">Slot {id.toUpperCase()} (Votes: {data.votes?.[id] || 0})</span>
-                    <button onClick={() => handleResetSlot(id, 'charity')} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={12}/></button>
-                  </div>
-                  <input 
-                    placeholder="Charity Name" 
-                    value={data.charityTask?.[id === 'c1' ? 'name1' : 'name2'] || ""} 
-                    onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'name1' : 'name2']: e.target.value}})} 
-                    className="w-full bg-white/5 border border-current border-opacity-10 p-2 text-[9px] font-black outline-none focus:border-white/30" 
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="relative">
-                      <LinkIcon size={10} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-20" />
-                      <input 
-                        placeholder="Link" 
-                        value={data.charityTask?.[id === 'c1' ? 'link1' : 'link2'] || ""} 
-                        onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'link1' : 'link2']: e.target.value}})} 
-                        className="w-full bg-white/5 border border-current border-opacity-10 p-2 pl-7 text-[8px] font-mono outline-none focus:border-white/30" 
-                      />
-                    </div>
-                    <div className="relative">
-                      <ImageIcon size={10} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-20" />
-                      <input 
-                        placeholder="Image URL" 
-                        value={data.charityTask?.[id === 'c1' ? 'img1' : 'img2'] || ""} 
-                        onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'img1' : 'img2']: e.target.value}})} 
-                        className="w-full bg-white/5 border border-current border-opacity-10 p-2 pl-7 text-[8px] font-mono outline-none focus:border-white/30" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => save({ charityTask: data.charityTask })} className="w-full py-2 bg-white/10 text-[9px] font-black uppercase hover:bg-white/20 transition-all">Update Charity Slots</button>
+       {/* GLOBAL: NOTICE SECTION */}
+       <div className="p-4 border border-current border-opacity-10 bg-white/[0.02] space-y-4">
+          <div className="space-y-2">
+             <label className="text-[8px] font-black uppercase opacity-40 block">Official Notice Statement</label>
+             <textarea value={data.notice || ""} onChange={e => setData({...data, notice: e.target.value})} className="w-full bg-white/5 border border-current border-opacity-10 p-3 text-[10px] font-bold h-20 outline-none focus:border-red-500/50" />
           </div>
-
-          {/* Growth Proposals */}
-          <div className="p-4 border border-dashed border-current border-opacity-20 space-y-6 text-left">
-            <span className="text-[8px] font-black uppercase opacity-40">Growth Strategy Section</span>
-            <div className="space-y-6">
-              {['m1', 'm2'].map(id => (
-                <div key={id} className="space-y-2 border-b border-white/5 pb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[7px] font-black opacity-30 uppercase">Slot {id.toUpperCase()} (Votes: {data.votes?.[id] || 0})</span>
-                    <button onClick={() => handleResetSlot(id, 'marketing')} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={12}/></button>
-                  </div>
-                  <input 
-                    placeholder="Strategy Name/Description" 
-                    value={data.marketingTask?.[id === 'm1' ? 'name1' : 'name2'] || ""} 
-                    onChange={e => setData({...data, marketingTask: {...data.marketingTask, [id === 'm1' ? 'name1' : 'name2']: e.target.value}})} 
-                    className="w-full bg-white/5 border border-current border-opacity-10 p-2 text-[9px] font-black outline-none focus:border-white/30" 
-                  />
-                </div>
-              ))}
-            </div>
-            <button onClick={() => save({ marketingTask: data.marketingTask })} className="w-full py-2 bg-white/10 text-[9px] font-black uppercase hover:bg-white/20 transition-all">Update Growth Slots</button>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. MANUAL HISTORY LOGGING */}
-      <div className="space-y-4 border-t border-current border-opacity-10 pt-8">
-        <div className="flex justify-between items-center text-left">
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Verified History Log</span>
-          <button 
-            onClick={() => {
-              const newEntry = { 
-                date: new Date().toISOString().split('T')[0], 
-                type: 'Manual', 
-                task: 'NEW ENTRY', 
-                amount: '0.0 SOL', 
-                link: '' 
-              };
-              save({ history: [newEntry, ...(data.history || [])] });
-            }} 
-            className="text-[8px] font-black uppercase border border-current px-3 py-1 hover:bg-white hover:text-black transition-all"
-          >
-            + New Artifact
+          <button onClick={() => save({ notice: data.notice })} className="w-full py-2 bg-white text-black font-black uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-zinc-200">
+             {saving ? <RefreshCw className="animate-spin" size={12}/> : <Save size={12}/>} Update Announcement
           </button>
-        </div>
-        
-        <div className="space-y-4">
-          {(data.history || []).map((item, i) => (
-            <div key={i} className="flex flex-col gap-3 bg-white/5 p-4 border border-current border-opacity-10 text-left">
-              <div className="flex gap-4 items-center">
-                <div className="flex flex-col gap-1 w-24">
-                  <label className="text-[6px] uppercase opacity-30 flex items-center gap-1"><Calendar size={8}/> Date</label>
-                  <input 
-                    value={item.date} 
-                    onChange={e => { const h = [...data.history]; h[i].date = e.target.value; setData({...data, history: h}); }} 
-                    className="w-full bg-transparent text-[8px] font-mono outline-none border-b border-white/10" 
-                  />
+       </div>
+
+       {/* GLOBAL: ALLOCATED SECTION */}
+       <div className="p-4 border border-current border-opacity-10 bg-white/[0.02] space-y-4">
+          <div className="space-y-2 text-left">
+             <label className="text-[8px] font-black uppercase opacity-40 block">Allocated SOL (Real-time)</label>
+             <input 
+               type="number" 
+               value={data.allocatedBalance === 0 ? "" : data.allocatedBalance} 
+               placeholder="0.00"
+               onChange={e => setData({...data, allocatedBalance: e.target.value === "" ? 0 : parseFloat(e.target.value)})} 
+               className="w-full bg-white/5 border border-current border-opacity-10 p-3 text-xs font-black outline-none focus:border-red-500/50" 
+             />
+          </div>
+          <button onClick={() => save({ allocatedBalance: data.allocatedBalance })} className="w-full py-2 bg-red-500 text-black font-black uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-red-400">
+             {saving ? <RefreshCw className="animate-spin" size={12}/> : <Save size={12}/>} Sync Allocation
+          </button>
+       </div>
+
+       <div className="space-y-8 border-t border-current border-opacity-10 pt-8">
+          <div className="space-y-6">
+             <span className="text-[10px] font-black uppercase tracking-widest opacity-80 block">Active Proposals Logic</span>
+             
+             {/* Charity Configuration */}
+             <div className="p-4 border border-dashed border-current border-opacity-20 space-y-6">
+                <div className="flex justify-between items-center"><span className="text-[8px] font-black uppercase opacity-40">Charity Section</span></div>
+                <div className="space-y-6">
+                   <div className="space-y-1">
+                      <label className="text-[7px] uppercase opacity-30">Goal Target (SOL)</label>
+                      <input type="number" value={data.charityTask?.target || ""} onChange={e => setData({...data, charityTask: {...data.charityTask, target: e.target.value}})} className="w-24 bg-white/5 border p-2 text-xs font-black outline-none" />
+                   </div>
+                   {['c1', 'c2'].map(id => (
+                     <div key={id} className="space-y-2 border-b border-white/5 pb-4 text-left">
+                        <div className="flex justify-between items-center mb-1">
+                           <span className="text-[7px] font-black opacity-30 uppercase">Option {id.toUpperCase()} (Votes: {data.votes?.[id] || 0})</span>
+                           <button onClick={() => handleResetSlot(id, 'charity')} className="text-red-500 hover:text-red-400"><Trash2 size={12}/></button>
+                        </div>
+                        <input placeholder="Name" value={data.charityTask?.[id === 'c1' ? 'name1' : 'name2'] || ""} onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'name1' : 'name2']: e.target.value}})} className="w-full bg-white/5 border p-2 text-[9px] font-black outline-none" />
+                        <div className="grid grid-cols-2 gap-2">
+                           <input placeholder="Link" value={data.charityTask?.[id === 'c1' ? 'link1' : 'link2'] || ""} onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'link1' : 'link2']: e.target.value}})} className="bg-white/5 border p-2 text-[8px] font-mono outline-none" />
+                           <input placeholder="Img URL" value={data.charityTask?.[id === 'c1' ? 'img1' : 'img2'] || ""} onChange={e => setData({...data, charityTask: {...data.charityTask, [id === 'c1' ? 'img1' : 'img2']: e.target.value}})} className="bg-white/5 border p-2 text-[8px] font-mono outline-none" />
+                        </div>
+                     </div>
+                   ))}
                 </div>
-                <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-[6px] uppercase opacity-30">Task Description</label>
-                  <input 
-                    value={item.task} 
-                    onChange={e => { const h = [...data.history]; h[i].task = e.target.value.toUpperCase(); setData({...data, history: h}); }} 
-                    className="w-full bg-transparent text-[9px] font-black outline-none border-b border-white/10" 
-                  />
+                <button onClick={() => save({ charityTask: data.charityTask })} className="w-full py-2 bg-white/10 text-[9px] font-black uppercase hover:bg-white/20">Sync Charity Configuration</button>
+             </div>
+
+             {/* Marketing Configuration */}
+             <div className="p-4 border border-dashed border-current border-opacity-20 space-y-6">
+                <span className="text-[8px] font-black uppercase opacity-40">Growth Section</span>
+                <div className="space-y-4">
+                   <div className="space-y-1">
+                      <label className="text-[7px] uppercase opacity-30">Goal Target (SOL)</label>
+                      <input type="number" value={data.marketingTask?.target || ""} onChange={e => setData({...data, marketingTask: {...data.marketingTask, target: e.target.value}})} className="w-24 bg-white/5 border p-2 text-xs font-black outline-none" />
+                   </div>
+                   {['m1', 'm2'].map(id => (
+                     <div key={id} className="space-y-2 border-b border-white/5 pb-4 text-left">
+                        <div className="flex justify-between items-center mb-1">
+                           <span className="text-[7px] font-black opacity-30 uppercase">Option {id.toUpperCase()} (Votes: {data.votes?.[id] || 0})</span>
+                           <button onClick={() => handleResetSlot(id, 'marketing')} className="text-red-500 hover:text-red-400"><Trash2 size={12}/></button>
+                        </div>
+                        <input placeholder="Strategy Name" value={data.marketingTask?.[id === 'm1' ? 'name1' : 'name2'] || ""} onChange={e => setData({...data, marketingTask: {...data.marketingTask, [id === 'm1' ? 'name1' : 'name2']: e.target.value}})} className="w-full bg-white/5 border p-2 text-[9px] font-black outline-none" />
+                     </div>
+                   ))}
                 </div>
-                <button onClick={() => { const h = [...data.history]; h.splice(i, 1); save({ history: h }); }} className="text-red-500 p-2 hover:bg-red-500/10 rounded self-end">
-                  <Trash2 size={14}/>
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[6px] uppercase opacity-30">Amount SOL</label>
-                  <input 
-                    value={item.amount} 
-                    onChange={e => { const h = [...data.history]; h[i].amount = e.target.value; setData({...data, history: h}); }} 
-                    className="bg-transparent text-[9px] font-black outline-none border-b border-white/10 italic" 
-                  />
+                <button onClick={() => save({ marketingTask: data.marketingTask })} className="w-full py-2 bg-white/10 text-[9px] font-black uppercase hover:bg-white/20">Sync Strategy Configuration</button>
+             </div>
+          </div>
+       </div>
+
+       {/* HISTORY: MANUAL ENTRIES */}
+       <div className="space-y-4 border-t border-current border-opacity-10 pt-8">
+          <div className="flex justify-between items-center text-left">
+             <span className="text-[10px] font-black uppercase tracking-widest opacity-80 block">Verified History Log</span>
+             <button onClick={() => {
+                const newTask = { date: new Date().toISOString().split('T')[0], type: 'Manual', task: 'Adjustment', amount: '0.0 SOL', link: '' };
+                save({ history: [newTask, ...(data.history || [])] });
+             }} className="text-[8px] font-black uppercase border border-current px-2 py-1 hover:bg-white hover:text-black transition-all">+ Log Artifact</button>
+          </div>
+          <div className="space-y-2">
+             {(data.history || []).map((item, i) => (
+                <div key={i} className="flex flex-col gap-2 bg-white/5 p-3 border border-current border-opacity-10 text-left">
+                   <div className="flex gap-2">
+                      <input value={item.task} onChange={e => { const h = [...data.history]; h[i].task = e.target.value.toUpperCase(); setData({...data, history: h}); }} className="flex-1 bg-transparent text-[9px] font-black uppercase outline-none" />
+                      <input value={item.amount} onChange={e => { const h = [...data.history]; h[i].amount = e.target.value; setData({...data, history: h}); }} className="w-16 bg-transparent text-[9px] italic outline-none text-right" />
+                      <button onClick={() => { const h = [...data.history]; h.splice(i, 1); save({ history: h }); }} className="text-red-500 transition-colors hover:text-red-400"><Trash2 size={12}/></button>
+                   </div>
+                   <input placeholder="Solscan Proof Link" value={item.link || ""} onChange={e => { const h = [...data.history]; h[i].link = e.target.value; setData({...data, history: h}); }} className="w-full bg-black/40 text-[7px] font-mono p-1 outline-none opacity-60 focus:opacity-100" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[6px] uppercase opacity-30 flex items-center gap-1"><LinkIcon size={8}/> Solscan Proof Link</label>
-                  <input 
-                    value={item.link || ""} 
-                    onChange={e => { const h = [...data.history]; h[i].link = e.target.value; setData({...data, history: h}); }} 
-                    className="bg-transparent text-[7px] font-mono outline-none border-b border-white/10 opacity-60 focus:opacity-100" 
-                    placeholder="https://solscan.io/tx/..."
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {data.history?.length > 0 && (
-            <button 
-              onClick={() => save({ history: data.history })} 
-              className="w-full py-3 bg-white text-black font-black text-[9px] uppercase hover:bg-zinc-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.05)]"
-            >
-              Force Sync Ledger History
-            </button>
-          )}
-        </div>
-      </div>
+             ))}
+             {data.history?.length > 0 && <button onClick={() => save({ history: data.history })} className="w-full py-2 bg-white text-black font-black text-[9px] uppercase hover:bg-zinc-200 transition-all">Force Sync History</button>}
+          </div>
+       </div>
     </div>
   );
 };
-
 
 
 // --- MAIN APP ---
@@ -1181,14 +1051,14 @@ const App = () => {
         <div className="space-y-1 opacity-80 italic transition-all"><p>quietly built.</p><p className="opacity-75">slowly found.</p><p className="opacity-50">rightfully held.</p></div>
         
         <div className="flex flex-col items-end gap-3 mt-10">
-          <button onClick={() => setView('world')} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
+          <button onClick={() => setView('world')} className={`flex items-center gap-3 text-[10px] font-black justify-end text-right uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
             Make things right <MoveRight size={14} />
           </button>
           <button onClick={() => setView('governance')} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
             The Ledger <BarChart3 size={14} />
           </button>
           <button onClick={() => setView('community')} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
-            Right Community <Users size={14} />
+            Right Chat <Users size={14} />
           </button>
         </div>
 
