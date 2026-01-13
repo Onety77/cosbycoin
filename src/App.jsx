@@ -129,6 +129,9 @@ const apiKey = (() => {
   try {
     if (typeof process !== 'undefined' && process.env?.VITE_APP_GEMINI) return process.env.VITE_APP_GEMINI;
   } catch (e) {}
+  try {
+    if (typeof window !== 'undefined' && window.VITE_APP_GEMINI) return window.VITE_APP_GEMINI;
+  } catch (e) {}
   return typeof __apiKey !== 'undefined' ? __apiKey : "";
 })();
 
