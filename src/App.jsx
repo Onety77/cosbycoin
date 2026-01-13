@@ -111,12 +111,12 @@ const SOL_CA = "So11111111111111111111111111111111111111112";
 const ADMIN_PASSWORD = (() => {
   try {
     // Check import.meta.env first (Vite standard)
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PASSWORD) {
-      return import.meta.env.VITE_PASSWORD;
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SECTION) {
+      return import.meta.env.VITE_SECTION;
     }
     // Fallback to process.env (Node/Webpack standard)
-    if (typeof process !== 'undefined' && process.env?.VITE_PASSWORD) {
-      return process.env.VITE_PASSWORD;
+    if (typeof process !== 'undefined' && process.env?.VITE_SECTION) {
+      return process.env.VITE_SECTION;
     }
   } catch (e) {}
   return ""; // Default to empty if not found
