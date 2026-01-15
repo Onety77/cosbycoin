@@ -442,16 +442,16 @@ const MemeGenerator = ({ darkMode, onBack }) => {
       
       const userInstruction = random 
   ? "Generate a short, punchy lore snippet about Bitcointalk in 2011 and CosbyCoin."
-  : `The message is: "${prompt}".`;
+  : `Place this text professionally: "${prompt}".`;
 
-const promptPayload = `Perform an Artistic Defacement:
-1. Reference Image 1 as your primary source and Image 2 as your structural guide.
-2. If Image 1 is provided, transform it into a digital sketch or gritty, high-contrast paint style to match the CosbyCoin 2011 aesthetic.
-3. If Image 1 is not provided, use Image 2 and apply the same gritty filter.
+const promptPayload = `Perform a Template Injection:
+1. Reference Image 2 as your rigid base canvas.
+2. If Image 1 (User Input) is provided, intelligently crop it and place it into the central 'content' area of Image 2. 
+3. If Image 1 is not provided, keep Image 2 as is.
 4. Process the text: ${userInstruction}
-5. Hand-written Element: Add the text in an imperfect, "marker-style" handwriting that feels scribbled over the image by a human.
-6. Visibility: Despite the messy style, the text MUST be the focal point. Ensure professional contrast and central or rule-of-thirds placement.
-7. Final Output: A panoramic 4:1 artifact that looks like a recovered historical file.
+5. Text Placement: Overlay the text on top of the 'content' area (Image 1). 
+6. Stylization: Ensure the text remains perfectly readable. Use a 'textbox' effect or drop shadow if necessary to separate the text from the user background.
+7. Tone: The text should look like a system alert or a forum post header.
 8. OUTPUT MUST BE IMAGE DATA ONLY.`;
 
       const fetchWithRetry = async (retries = 5, delay = 1000) => {
