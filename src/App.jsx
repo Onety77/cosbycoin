@@ -49,35 +49,13 @@ import {
   Loader2
 } from 'lucide-react';
 
-// --- CONFIGURATION ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' 
-  ? JSON.parse(__firebase_config) 
-  : {
-      apiKey: "AIzaSyB_gNokFnucM2nNAhhkRRnPsPNBAShYlMs",
-      authDomain: "it-token.firebaseapp.com",
-      projectId: "it-token",
-      storageBucket: "it-token.firebasestorage.app",
-      messagingSenderId: "804328953904",
-      appId: "1:804328953904:web:e760545b579bf2527075f5"
-    };
+// --- CONSTANTS & CONFIGURATION ---
+const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
 
-
-    // --- API CONFIGURATION ---
-const apiKey = (() => {
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_GEMINI) return import.meta.env.VITE_APP_GEMINI;
-  } catch (e) {}
-  try {
-    if (typeof process !== 'undefined' && process.env?.VITE_APP_GEMINI) return process.env.VITE_APP_GEMINI;
-  } catch (e) {}
-  try {
-    if (typeof window !== 'undefined' && window.VITE_APP_GEMINI) return window.VITE_APP_GEMINI;
-  } catch (e) {}
-  return typeof __apiKey !== 'undefined' ? __apiKey : "";
-})();
+// Environment-provided API Key (Instructional Mandate: Always set to empty string)
+const apiKey = ""; 
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-
 
 const AVATAR_LIST = [
   { id: 'pepe', name: 'PEPE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=pepe' },
@@ -97,13 +75,22 @@ const COLOR_LIST = [
   { id: 'white', hex: '#ffffff', label: 'PURE_SIGNAL' },
 ];
 
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+  ? JSON.parse(__firebase_config) 
+  : {
+      apiKey: "AIzaSyB_gNokFnucM2nNAhhkRRnPsPNBAShYlMs",
+      authDomain: "it-token.firebaseapp.com",
+      projectId: "it-token",
+      storageBucket: "it-token.firebasestorage.app",
+      messagingSenderId: "804328953904",
+      appId: "1:804328953904:web:e760545b579bf2527075f5"
+    };
+
 // Initialize Firebase services
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
 
 // --- HELPERS ---
 const getBase64FromUrl = async (url) => {
@@ -326,19 +313,8 @@ const ChatApp = ({ darkMode }) => {
           const isMe = msg.uid === user?.uid;
           const hasReactions = msg.reactions && Object.values(msg.reactions).some(v => v > 0);
           return (
-            <div 
-              key={msg.id} 
-              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} 
-              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} 
-              onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }} 
-              onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }} 
-              onTouchEnd={() => clearTimeout(longPressTimer.current)} 
-              onDoubleClick={() => handleReaction(msg.id, 'heart')}
-            >
-              <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
-                <img src={msg.avatar} className="w-4 h-4 object-cover border border-current opacity-70" alt="" />
-                <span className="text-[10px] font-black uppercase italic tracking-tighter" style={{ color: msg.color }}>{msg.user}</span>
-              </div>
+            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }} onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onDoubleClick={() => handleReaction(msg.id, 'heart')}>
+              <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}><img src={msg.avatar} className="w-4 h-4 object-cover border border-current opacity-70" alt="" /><span className="text-[10px] font-black uppercase italic tracking-tighter" style={{ color: msg.color }}>{msg.user}</span></div>
               <div className={`relative px-4 py-2 max-w-[90%] border-r-4 text-[11px] font-bold shadow-sm cursor-pointer transition-all ${isMe ? 'bg-[#2b506f] text-white border-red-600' : (darkMode ? 'bg-white/5 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300')}`}>
                   {msg.replyTo && <div className="text-[9px] opacity-40 mb-2 border-l-2 border-current pl-2 italic bg-black/5 p-1 truncate">@{msg.replyTo.user}: {msg.replyTo.text}</div>}
                   <p className="break-words whitespace-pre-wrap leading-relaxed">{msg.text}</p>
@@ -431,7 +407,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
   };
 
   const generateMeme = async (random = false) => {
-    if (!apiKey) return setError("API Key configuration missing.");
+    // Note: apiKey check removed as the environment injects it at runtime
     setGenerating(true);
     setError(null);
     
@@ -466,7 +442,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
       }
     } catch (e) {
       console.error(e);
-      setError("AI Generation failed. Retry in a moment.");
+      setError("AI Generation failed. This usually means the API is temporarily busy. Retry?");
     } finally {
       setGenerating(false);
     }
@@ -512,12 +488,12 @@ const MemeGenerator = ({ darkMode, onBack }) => {
         <div className="flex-1 flex flex-col items-center justify-center border-4 border-dashed border-current border-opacity-10 rounded-xl relative min-h-[400px]">
           <AnimatePresence mode="wait">
             {memeResult ? (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full h-full flex flex-col items-center justify-center p-4 gap-4">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full h-full flex flex-col items-center justify-center p-4 gap-4" key="result">
                 <img src={memeResult} className="max-w-full max-h-[70vh] shadow-2xl border-4 border-white" alt="Result" />
                 <a href={memeResult} download="cosbycoin_meme.png" className="px-6 py-2 bg-black text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-red-700 transition-colors"><Download size={14} /> Download Protocol</a>
               </motion.div>
             ) : (
-              <div className="text-center space-y-4 opacity-20">
+              <div className="text-center space-y-4 opacity-20" key="waiting">
                 <ImagePlus size={64} className="mx-auto" />
                 <p className="text-xs font-black uppercase tracking-widest italic">Awaiting AI Uplink...</p>
               </div>
@@ -534,7 +510,6 @@ const MemeGenerator = ({ darkMode, onBack }) => {
     </div>
   );
 };
-
 
 // --- X MOCKUP COMPONENT ---
 const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats }) => (
@@ -555,6 +530,7 @@ const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, sta
       <div className="ml-auto flex-shrink-0"><Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} /></div>
     </div>
     <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>{text}</p>
+    {image && <div className="rounded-2xl border border-gray-200 overflow-hidden mb-3"><img src={image} alt="Tweet Content" className="w-full h-auto object-cover" /></div>}
     <div className="flex items-center justify-between text-gray-500 px-1">
       <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
       <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
