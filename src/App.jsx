@@ -441,16 +441,18 @@ const MemeGenerator = ({ darkMode, onBack }) => {
       const base64Data = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
       
       const userInstruction = random 
-        ? "Generate a hilarious random meme quote about the 2011 CosbyCoin Bitcointalk hijack. Use a font and color that matches the site's aesthetic."
-        : `Professionally place the following text onto this image: "${prompt}". Use a font and color that matches the site's aesthetic.`;
+  ? "Generate a short, punchy lore snippet about Bitcointalk in 2011 and CosbyCoin."
+  : `Place this text professionally: "${prompt}".`;
 
-      const promptPayload = `Perform an Artistic Signal Correction:
-      1. Reference Image 1 (Subject) and Image 2 (Template Canvas).
-      2. Use Image 2 as your rigid canvas for the final output size and ratio.
-      3. Process the text: ${userInstruction}
-      4. Place the extracted or modified subject onto the template.
-      5. Ensure professional contrast and historical accuracy to the 2011 Bitcointalk hijack style.
-      6. OUTPUT MUST BE IMAGE DATA ONLY.`;
+const promptPayload = `Perform a Template Injection:
+1. Reference Image 2 as your rigid base canvas.
+2. If Image 1 (User Input) is provided, intelligently crop it and place it into the central 'content' area of Image 2. 
+3. If Image 1 is not provided, keep Image 2 as is.
+4. Process the text: ${userInstruction}
+5. Text Placement: Overlay the text on top of the 'content' area (Image 1). 
+6. Stylization: Ensure the text remains perfectly readable. Use a 'textbox' effect or drop shadow if necessary to separate the text from the user background.
+7. Tone: The text should look like a system alert or a forum post header.
+8. OUTPUT MUST BE IMAGE DATA ONLY.`;
 
       const fetchWithRetry = async (retries = 5, delay = 1000) => {
         // FIXED: URL Re-constructed inside the scope to pick up environmental apiKey
@@ -520,7 +522,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
       <div className="flex-1 flex flex-col md:flex-row p-6 gap-8 overflow-y-auto">
         <div className="w-full md:w-1/3 space-y-6 text-left">
           <div className="space-y-4">
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600 leading-none">History Architect</h2>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600 leading-none">MEMES UPLINK</h2>
             <p className="text-xs opacity-60">Alter the narrative. Deface the established order.</p>
           </div>
           
@@ -585,7 +587,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
                   onClick={downloadMeme} 
                   className="px-8 py-3 bg-black text-white rounded-none border-2 border-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-red-700 transition-colors italic"
                 >
-                  <Download size={14} /> Download Protocol
+                  <Download size={14} /> Download
                 </button>
               </motion.div>
             ) : (
@@ -600,7 +602,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
               <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
                 <Zap size={48} className="fill-current text-yellow-400" />
               </motion.div>
-              <p className="font-mono text-xs uppercase tracking-[0.5em] animate-pulse">Calculating Defacement...</p>
+              <p className="font-mono text-xs uppercase tracking-[0.5em] animate-pulse">processing...</p>
             </div>
           )}
         </div>
@@ -801,7 +803,7 @@ const App = () => {
                   <span className="bg-white text-black px-4 py-2 font-black text-xs uppercase italic">Launch Protocol</span>
                 </div>
               </div>
-              <div className="p-4 text-[10px] font-bold uppercase opacity-60 text-right">Generate professional Cosby lore using Gemini AI.</div>
+              <div className="p-4 text-[10px] font-bold uppercase opacity-60 text-right">Generate Endless Cosby lore.</div>
             </div>
             <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#fdfdfd] border-[#c4c4c4]'}`}>
               <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic text-right">Media Spotlight</div>
