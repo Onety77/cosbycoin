@@ -909,6 +909,7 @@ const App = () => {
   const [generatedMeme, setGeneratedMeme] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0); // Progress tracking for the button
 
   // Sign in anonymously on mount to enable Firestore listeners
   useEffect(() => {
@@ -975,6 +976,16 @@ const App = () => {
     }
     setIsGenerating(true);
     setError(null);
+    setProgress(0); // Reset progress
+
+    // Progress Simulation Logic
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 92) return prev; // Hold near end until response
+        return prev + 2;
+      });
+    }, 150);
+
     const base64Data = uploadImage.split(',')[1];
     
     try {
@@ -1017,12 +1028,18 @@ const App = () => {
       const result = await response.json();
       const base64Image = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
       
-      if (base64Image) setGeneratedMeme(`data:image/png;base64,${base64Image}`);
-      else throw new Error("Incomplete Signal");
+      if (base64Image) {
+        setProgress(100); // Complete progress
+        setGeneratedMeme(`data:image/png;base64,${base64Image}`);
+      } else {
+        throw new Error("Incomplete Signal");
+      }
     } catch (err) {
       setError("Artifact creation failed. Retry.");
     } finally {
+      clearInterval(progressInterval);
       setIsGenerating(false);
+      setTimeout(() => setProgress(0), 1000); // Reset for next use
     }
   };
 
@@ -1114,15 +1131,20 @@ const App = () => {
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </label>
                 
-                {/* PERSISTENT VISIBILITY BUTTON - FIXED COLOR CONFLICT */}
+                {/* PERSISTENT VISIBILITY BUTTON - WITH PROGRESS VISUAL */}
                 <button 
                   onClick={architectMeme} 
                   disabled={!uploadImage || isGenerating} 
-                  className={`w-full py-4 font-black uppercase text-[10px] tracking-[0.5em] transition-all
+                  className={`w-full py-4 bg-current text-current-bg font-black uppercase text-[10px] tracking-[0.5em] transition-all relative overflow-hidden
                     ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}
                     ${(!uploadImage || isGenerating) ? 'opacity-20 cursor-not-allowed' : 'hover:opacity-80 active:translate-y-1'}`}
                 >
-                  {isGenerating ? "Processing..." : "MAKE IT RIGHT"}
+                  {/* Progress Fill Layer */}
+                  <div 
+                    className={`absolute top-0 left-0 h-full transition-all duration-300 ease-out ${darkMode ? 'bg-black/10' : 'bg-white/20'}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                  <span className="relative z-10">{isGenerating ? "Processing..." : "MAKE IT RIGHT"}</span>
                 </button>
 
                 {generatedMeme && (
