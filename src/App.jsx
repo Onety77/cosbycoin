@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   signInAnonymously, 
@@ -52,7 +52,7 @@ import {
 // --- CONSTANTS & CONFIGURATION ---
 const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
 
-// Environment-provided API Key (Instructional Mandate: Always set to empty string)
+// API Key (Instructional Mandate: Always set to empty string)
 const apiKey = ""; 
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
@@ -86,8 +86,7 @@ const firebaseConfig = typeof __firebase_config !== 'undefined'
       appId: "1:804328953904:web:e760545b579bf2527075f5"
     };
 
-// Initialize Firebase services
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -269,7 +268,7 @@ const ChatApp = ({ darkMode }) => {
         <div className="mb-6 border-b-2 border-red-600/30 pb-4">
           <h4 className="text-sm font-black uppercase tracking-widest text-red-600 italic">Identify Yourself</h4>
         </div>
-        <div className="space-y-6 flex-1">
+        <div className="space-y-6 flex-1 text-left">
           <input value={username} onChange={(e) => setUsername(e.target.value.toUpperCase())} placeholder="ALIAS" className={`w-full bg-transparent border-b-2 border-current py-3 outline-none text-2xl font-black italic tracking-tighter ${darkMode ? 'focus:border-white' : 'focus:border-black'}`} />
           <div>
             <span className="text-[10px] font-black uppercase opacity-40 block mb-3">Avatar Selection</span>
@@ -313,9 +312,16 @@ const ChatApp = ({ darkMode }) => {
           const isMe = msg.uid === user?.uid;
           const hasReactions = msg.reactions && Object.values(msg.reactions).some(v => v > 0);
           return (
-            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }} onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onDoubleClick={() => handleReaction(msg.id, 'heart')}>
+            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`}>
               <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}><img src={msg.avatar} className="w-4 h-4 object-cover border border-current opacity-70" alt="" /><span className="text-[10px] font-black uppercase italic tracking-tighter" style={{ color: msg.color }}>{msg.user}</span></div>
-              <div className={`relative px-4 py-2 max-w-[90%] border-r-4 text-[11px] font-bold shadow-sm cursor-pointer transition-all ${isMe ? 'bg-[#2b506f] text-white border-red-600' : (darkMode ? 'bg-white/5 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300')}`}>
+              <div 
+                className={`relative px-4 py-2 max-w-[90%] border-r-4 text-[11px] font-bold shadow-sm cursor-pointer transition-all ${isMe ? 'bg-[#2b506f] text-white border-red-600' : (darkMode ? 'bg-white/5 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300')}`}
+                onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }}
+                onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }}
+                onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }}
+                onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                onDoubleClick={() => handleReaction(msg.id, 'heart')}
+              >
                   {msg.replyTo && <div className="text-[9px] opacity-40 mb-2 border-l-2 border-current pl-2 italic bg-black/5 p-1 truncate">@{msg.replyTo.user}: {msg.replyTo.text}</div>}
                   <p className="break-words whitespace-pre-wrap leading-relaxed">{msg.text}</p>
               </div>
@@ -337,9 +343,9 @@ const ChatApp = ({ darkMode }) => {
       )}
       {activeMenu === 'settings' && (
         <div className={`absolute top-10 right-4 z-[90] p-4 border-2 shadow-2xl flex flex-col gap-4 animate-fade-in ${darkMode ? 'bg-gray-900 border-white/10 text-white' : 'bg-white border-gray-200 text-black'}`} onClick={e => e.stopPropagation()}>
-          <button onClick={() => { setIsSetup(false); setActiveMenu(null); }} className="text-[10px] font-black uppercase flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity"><Palette size={14}/> Appearance</button>
+          <button onClick={() => { setIsSetup(false); setActiveMenu(null); }} className="text-[10px] font-black uppercase flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity text-left"><Palette size={14}/> Appearance</button>
           <div className="h-[1px] w-full opacity-10 bg-current" />
-          <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-[10px] font-black uppercase text-red-500 flex items-center gap-3 hover:opacity-70 transition-opacity"><LogOut size={14}/> Reset Signal</button>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-[10px] font-black uppercase text-red-500 flex items-center gap-3 hover:opacity-70 transition-opacity text-left"><LogOut size={14}/> Reset Signal</button>
         </div>
       )}
       {contextMenu && (
@@ -353,7 +359,7 @@ const ChatApp = ({ darkMode }) => {
       )}
       <div className={`p-4 border-t ${darkMode ? 'border-white/10 bg-black/20' : 'border-gray-200 bg-white'}`}>
         {replyingTo && (
-          <div className="flex justify-between items-center bg-red-900/10 p-2 mb-2 border-l-2 border-red-700 animate-fade-in">
+          <div className="flex justify-between items-center bg-red-900/10 p-2 mb-2 border-l-2 border-red-700 animate-fade-in text-left">
             <span className="text-[9px] uppercase font-black italic text-red-600 truncate pr-6">Replying to {replyingTo.user}</span>
             <X size={10} className="cursor-pointer opacity-40 hover:opacity-100 transition-opacity" onClick={() => setReplyingTo(null)} />
           </div>
@@ -407,42 +413,57 @@ const MemeGenerator = ({ darkMode, onBack }) => {
   };
 
   const generateMeme = async (random = false) => {
-    // Note: apiKey check removed as the environment injects it at runtime
     setGenerating(true);
     setError(null);
     
-    try {
-      const templateBase64 = await getBase64FromUrl('template.jpg');
-      const backgroundBase64 = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
-      
-      const userInstruction = random 
-        ? "Generate a hilarious random meme quote, fake fact, or historical snippet about the 2011 CosbyCoin Bitcointalk hijack. Professional quality placement."
-        : `Professionally place the following text onto this image: "${prompt}". If this is the template with a central box, place the text exactly inside that box using a font and color that matches the site's aesthetic. If this is a custom image, place the text centered and use a color that provides maximum professional contrast.`;
+    // FIX: Exponential Backoff for API Reliability
+    const fetchWithRetry = async (retries = 5, delay = 1000) => {
+      try {
+        const templateBase64 = await getBase64FromUrl('template.jpg');
+        const backgroundBase64 = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
+        
+        const userInstruction = random 
+          ? "Generate a hilarious random meme quote, fake fact, or historical snippet about the 2011 CosbyCoin Bitcointalk hijack. Professional quality placement."
+          : `Professionally place the following text onto this image: "${prompt}". If this is the template with a central box, place the text exactly inside that box using a font and color that matches the site's aesthetic. If this is a custom image, place the text centered and use a color that provides maximum professional contrast.`;
 
-      const response = await fetch(GEMINI_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: userInstruction },
-              { inlineData: { mimeType: "image/jpeg", data: backgroundBase64 } }
-            ]
-          }],
-          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-        })
-      });
+        const response = await fetch(GEMINI_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: userInstruction },
+                { inlineData: { mimeType: "image/jpeg", data: backgroundBase64 } }
+              ]
+            }],
+            generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+          })
+        });
 
-      const result = await response.json();
-      const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-      
-      if (base64) {
-        setMemeResult(`data:image/png;base64,${base64}`);
-      } else {
-        throw new Error("AI failed to return an image.");
+        if (!response.ok) throw new Error(`API error ${response.status}`);
+        
+        const result = await response.json();
+        const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+        
+        if (base64) {
+          setMemeResult(`data:image/png;base64,${base64}`);
+        } else {
+          throw new Error("No image data returned.");
+        }
+      } catch (err) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, delay));
+          return fetchWithRetry(retries - 1, delay * 2);
+        }
+        throw err;
       }
+    };
+
+    try {
+      await fetchWithRetry();
     } catch (e) {
       console.error(e);
-      setError("AI Generation failed. This usually means the API is temporarily busy. Retry?");
+      setError("AI Uplink Disrupted. Try again in a moment.");
     } finally {
       setGenerating(false);
     }
@@ -458,7 +479,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row p-6 gap-8 overflow-y-auto">
-        <div className="w-full md:w-1/3 space-y-6">
+        <div className="w-full md:w-1/3 space-y-6 text-left">
           <div className="space-y-4">
             <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600">Meme Uplink</h2>
             <p className="text-xs opacity-60">Type your message or generate a random piece of 2011 lore.</p>
@@ -513,7 +534,7 @@ const MemeGenerator = ({ darkMode, onBack }) => {
 
 // --- X MOCKUP COMPONENT ---
 const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats }) => (
-  <a href={link || "#"} target="_blank" rel="noopener noreferrer" className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700' : 'bg-white border-gray-100 hover:border-gray-200'}`}>
+  <a href={link || "#"} target="_blank" rel="noopener noreferrer" className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700 text-left' : 'bg-white border-gray-100 hover:border-gray-200 text-left'}`}>
     <div className="flex items-center gap-3 mb-3">
       <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex-shrink-0">
         <img src={avatar} alt={name} className="w-full h-full object-cover" />
@@ -643,7 +664,7 @@ const App = () => {
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
           <a href="https://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10"><Twitter size={12} fill="currentColor" /> X.COM</a>
-          <span className="opacity-50 italic hidden lg:inline">Established Oct 25, 2011</span>
+          <span className="opacity-50 italic hidden lg:inline text-right">Established Oct 25, 2011</span>
         </div>
       </nav>
 
@@ -654,7 +675,7 @@ const App = () => {
               <img src="logo.png" alt="CosbyCoin Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-2xl grayscale hover:grayscale-0 transition-all duration-500" onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=CosbyCoin"; }} />
               {isHacked && <div className="absolute inset-0 bg-red-600/10 animate-pulse rounded-full" />}
             </motion.div>
-            <div className="space-y-1">
+            <div className="space-y-1 text-left">
               <h1 className={`text-4xl md:text-6xl font-black tracking-tighter flex flex-col leading-none ${isCosbyMode ? 'text-white' : 'text-[#2b506f]'}`}>
                 <span className={`${isHacked ? 'line-through opacity-10 text-xl' : ''} transition-all duration-700`}>BITCOIN FORUM</span>
                 <AnimatePresence>
@@ -677,7 +698,7 @@ const App = () => {
             <span>Official Status: Unauthorized Access Detected</span>
             <AlertTriangle size={16} className="text-yellow-400" />
           </div>
-          <div className={`p-8 border-t-2 transition-colors ${isCosbyMode ? 'bg-black/40 border-gray-800' : 'bg-white border-[#c4c4c4]'}`}>
+          <div className={`p-8 border-t-2 transition-colors ${isCosbyMode ? 'bg-black/40 border-gray-800' : 'bg-white border-[#c4c4c4] text-left'}`}>
             <h2 className="text-3xl md:text-5xl font-black text-[#b52a2a] mb-6 uppercase italic">The 2011 "Pre-Doge" Legacy</h2>
             <div className={`space-y-6 text-base md:text-xl leading-relaxed font-medium ${isCosbyMode ? 'text-gray-300' : 'text-gray-800'}`}>
               <p>Before Dogecoin ever existed, there was <strong>CosbyCoin</strong>. In 2011, a Bitcointalk forum donor hijacked the site, replacing “Bitcoin” with “CosbyCoin” and swapping logos with Bill Cosby’s face.</p>
@@ -703,24 +724,24 @@ const App = () => {
                   <span className="bg-white text-black px-4 py-2 font-black text-xs uppercase italic">Launch Protocol</span>
                 </div>
               </div>
-              <div className="p-4 text-[10px] font-bold uppercase opacity-60">Generate professional Cosby lore using Gemini AI.</div>
+              <div className="p-4 text-[10px] font-bold uppercase opacity-60 text-right">Generate professional Cosby lore using Gemini AI.</div>
             </div>
             <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#fdfdfd] border-[#c4c4c4]'}`}>
-              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic">Media Spotlight</div>
+              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic text-right">Media Spotlight</div>
               <div className="p-4 space-y-4">
                 {MEDIA_POSTS.map(post => (<XPostMockup key={post.id} isCosbyMode={isCosbyMode} {...post} />))}
               </div>
             </div>
             <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#f0f4f7] border-[#c4c4c4]'}`}>
-              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic">Evidence Vault</div>
+              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic text-right">Evidence Vault</div>
               <div className="p-6 space-y-6">
                 <EvidenceCard title="Terminology Index" desc="CosbyCoin remains the only altcoin ever officially listed on the Bitcointalk terminology page." link="https://bitcointalk.org/index.php?topic=2533.0" isCosbyMode={isCosbyMode} />
                 <EvidenceCard title="The IT News Report" desc="Deep dive into how a frustrated donor turned the crypto world upside down in 2011." link="https://www.itnews.com.au/news/bitcoin-forum-hijacked-by-frustrated-donor-276685" isCosbyMode={isCosbyMode} />
               </div>
             </div>
             <div className={`p-6 shadow-xl border-l-8 border-red-600 transition-colors ${isCosbyMode ? 'bg-gray-950 text-gray-400' : 'bg-white text-gray-700'}`}>
-              <h4 className="font-black flex items-center gap-2 mb-3 text-red-600 uppercase italic underline decoration-4 underline-offset-4 tracking-tighter text-xl"><Zap size={22} className="fill-current"/> Historical Impact</h4>
-              <p className="text-sm font-medium leading-relaxed">The 2011 hack proved that narrative is more powerful than code. CosbyCoin is a historical artifact that broke the "pure" Bitcoin narrative years before memecoins were a category.</p>
+              <h4 className="font-black flex items-center gap-2 mb-3 text-red-600 uppercase italic underline decoration-4 underline-offset-4 tracking-tighter text-xl text-right justify-end"><Zap size={22} className="fill-current"/> Historical Impact</h4>
+              <p className="text-sm font-medium leading-relaxed text-right">The 2011 hack proved that narrative is more powerful than code. CosbyCoin is a historical artifact that broke the "pure" Bitcoin narrative years before memecoins were a category.</p>
             </div>
           </div>
         </div>
@@ -732,7 +753,7 @@ const App = () => {
             <div className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] p-1 shadow-2xl max-w-[360px] w-full">
               <div className="bg-[#000080] text-white flex justify-between items-center px-2 py-1 text-xs font-bold mb-1">
                 <span className="flex items-center gap-2"><Terminal size={12}/> System Alert</span>
-                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] text-black px-1.5 leading-none border border-black hover:bg-red-600 hover:text-white transition-colors">X</button>
+                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] text-black px-1.5 leading-none border border-black hover:bg-red-600 hover:text-white transition-colors font-bold">X</button>
               </div>
               <div className="bg-white border border-[#808080] p-6 flex flex-col items-center gap-6">
                 <img src="popup.jpg" alt="Original Hack Coin" className="w-56 h-56 object-cover border-4 border-black" onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=History+Alert"; }} />
@@ -754,7 +775,7 @@ const App = () => {
 };
 
 const EvidenceCard = ({ title, desc, link, isCosbyMode }) => (
-  <div className={`p-5 border-2 rounded shadow-sm hover:shadow-md transition-all ${isCosbyMode ? 'bg-black/40 border-gray-700 hover:border-red-600' : 'bg-white border-gray-200 hover:border-[#2b506f]'}`}>
+  <div className={`p-5 border-2 rounded shadow-sm hover:shadow-md transition-all ${isCosbyMode ? 'bg-black/40 border-gray-700 hover:border-red-600 text-right' : 'bg-white border-gray-200 hover:border-[#2b506f] text-right'}`}>
     <h5 className={`font-black text-sm flex items-center justify-between gap-2 mb-3 uppercase italic ${isCosbyMode ? 'text-red-500' : 'text-[#2b506f]'}`}>{title} <ExternalLink size={16} /></h5>
     <p className={`text-[12px] mb-4 leading-relaxed font-medium ${isCosbyMode ? 'text-gray-400' : 'text-gray-600'}`}>{desc}</p>
     <a href={link} target="_blank" rel="noopener noreferrer" className={`text-xs font-black uppercase tracking-widest hover:underline decoration-2 ${isCosbyMode ? 'text-white' : 'text-blue-700'}`}>Verify the Truth →</a>
