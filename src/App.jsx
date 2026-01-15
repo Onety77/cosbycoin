@@ -78,6 +78,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
+
 // --- MEDIA SPOTLIGHT DATA ---
 const MEDIA_POSTS = [
   {
@@ -122,7 +124,6 @@ const ChatApp = ({ darkMode }) => {
   const scrollRef = useRef(null);
   const longPressTimer = useRef(null);
   const touchStartPos = useRef({ x: 0, y: 0 });
-  const CA_INTERNAL = "3vsKvFYRbn5Mrfk5mJsxEDto2UwmrcWtqvC5o7SYpump";
 
   useEffect(() => {
     const initAuth = async () => {
@@ -271,8 +272,8 @@ const ChatApp = ({ darkMode }) => {
       <div className="bg-black text-white px-4 py-2 flex items-center justify-between border-b border-white/10">
         <span className="text-[10px] font-black text-red-500 uppercase tracking-widest italic animate-pulse flex items-center gap-2"><ShieldAlert size={12}/> HACK_LIVE</span>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 cursor-pointer group" onClick={() => copyToClipboard(CA_INTERNAL)}>
-            <span className="text-[9px] opacity-40 group-hover:opacity-100 uppercase tracking-tighter transition-opacity">CA: {CA_INTERNAL.slice(0, 10)}...</span>
+          <div className="flex items-center gap-1 cursor-pointer group" onClick={() => copyToClipboard(OFFICIAL_CA)}>
+            <span className="text-[9px] opacity-40 group-hover:opacity-100 uppercase tracking-tighter transition-opacity">CA: {OFFICIAL_CA.slice(0, 10)}...</span>
             <Copy size={10} className={`${copiedCA ? 'text-green-500' : 'opacity-20'}`} />
           </div>
           <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu ? null : 'settings'); }} className="opacity-40 hover:opacity-100"><Settings size={14}/></button>
@@ -340,7 +341,7 @@ const ChatApp = ({ darkMode }) => {
           </div>
         )}
         <form onSubmit={handleSend} className="flex gap-2">
-          <input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={isSending ? "UPLINKING..." : "ENTER_SIGNAL..."} disabled={isSending} className={`flex-1 bg-transparent border-b-2 py-2 px-1 text-sm font-black italic outline-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} />
+          <input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={isSending ? "cosbing..." : "say something..."} disabled={isSending} className={`flex-1 bg-transparent border-b-2 py-2 px-1 text-sm font-black italic outline-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} />
           <button type="submit" disabled={!inputText.trim() || isSending} className={`p-2 transition-all ${isSending ? 'opacity-20' : 'hover:text-red-600'}`}><SendHorizontal size={20} /></button>
         </form>
       </div>
@@ -348,17 +349,27 @@ const ChatApp = ({ darkMode }) => {
   );
 };
 
-// --- AMBIENT GHOST COMPONENT ---
+// --- AMBIENT HIJACK COMPONENTS ---
 const CosbyGhost = ({ src, x, y, scale }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.5 }}
-    animate={{ opacity: [0, 0.4, 0], scale: [0.5, scale, 0.5], x: [0, 20, -20, 0] }}
+    animate={{ opacity: [0, 0.5, 0], scale: [0.5, scale, 0.5], rotate: [0, 5, -5, 0] }}
     transition={{ duration: 4, ease: "easeInOut" }}
-    className="fixed pointer-events-none z-10"
+    className="fixed pointer-events-none z-[5]"
     style={{ left: x, top: y }}
   >
-    <img src={src} className="w-48 md:w-64 grayscale opacity-30 shadow-2xl" alt="" />
+    <img src={src} className="w-48 md:w-64 grayscale opacity-40 shadow-2xl border border-red-600/20" alt="" />
   </motion.div>
+);
+
+const PassingMeme = ({ src, direction }) => (
+  <motion.img
+    initial={{ x: direction === 'right' ? '-100%' : '200%', y: Math.random() * 80 + '%' }}
+    animate={{ x: direction === 'right' ? '200%' : '-100%' }}
+    transition={{ duration: 15, ease: "linear" }}
+    src={src}
+    className="fixed w-32 md:w-48 opacity-20 pointer-events-none z-[1]"
+  />
 );
 
 // --- X MOCKUP COMPONENT ---
@@ -380,7 +391,6 @@ const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, sta
       <div className="ml-auto flex-shrink-0"><Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} /></div>
     </div>
     <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>{text}</p>
-  
     <div className="flex items-center justify-between text-gray-500 px-1">
       <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
       <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
@@ -396,6 +406,8 @@ const App = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [glitchText, setGlitchText] = useState("BITCOIN FORUM");
   const [ghosts, setGhosts] = useState([]);
+  const [passingMemes, setPassingMemes] = useState([]);
+  const [caCopied, setCaCopied] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsHacked(true), 1500);
@@ -415,37 +427,92 @@ const App = () => {
     }
   }, [isHacked]);
 
-  // Ambient Ghost Spawn Logic
+  // Ambient Overwhelming Spawn Logic
   useEffect(() => {
     if (!isCosbyMode) {
       setGhosts([]);
+      setPassingMemes([]);
       return;
     }
-    const interval = setInterval(() => {
+    
+    // Random "Ghost" Faces
+    const ghostInterval = setInterval(() => {
       const id = Date.now();
       const newGhost = {
         id,
         src: `cosby${Math.floor(Math.random() * 8) + 1}.jpg`,
-        x: Math.random() * 70 + 10 + '%',
-        y: Math.random() * 70 + 10 + '%',
-        scale: Math.random() * 0.4 + 0.6,
+        x: Math.random() * 80 + 5 + '%',
+        y: Math.random() * 80 + 5 + '%',
+        scale: Math.random() * 0.5 + 0.5,
       };
-      setGhosts(prev => [...prev.slice(-3), newGhost]); // Max 4 at once
+      setGhosts(prev => [...prev.slice(-5), newGhost]);
       setTimeout(() => setGhosts(prev => prev.filter(g => g.id !== id)), 4000);
-    }, 3500);
-    return () => clearInterval(interval);
+    }, 2500);
+
+    // Passing Background Memes
+    const memeInterval = setInterval(() => {
+      const id = `meme-${Date.now()}`;
+      const newMeme = {
+        id,
+        src: `cosby${Math.floor(Math.random() * 8) + 1}.jpg`,
+        direction: Math.random() > 0.5 ? 'right' : 'left'
+      };
+      setPassingMemes(prev => [...prev.slice(-3), newMeme]);
+      setTimeout(() => setPassingMemes(prev => prev.filter(m => m.id !== id)), 16000);
+    }, 8000);
+
+    return () => {
+      clearInterval(ghostInterval);
+      clearInterval(memeInterval);
+    };
   }, [isCosbyMode]);
+
+  const copyCA = () => {
+    const el = document.createElement('textarea');
+    el.value = OFFICIAL_CA;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCaCopied(true);
+    setTimeout(() => setCaCopied(false), 2000);
+  };
 
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isCosbyMode ? 'bg-[#1a1b1e] text-white' : 'bg-[#e5e5e8] text-[#000000]'} font-sans antialiased overflow-x-hidden`}>
-      {/* Ghost Background Images */}
+      
+      {/* Hijack Visuals Layer */}
       <AnimatePresence>
-        {isCosbyMode && ghosts.map(ghost => (
-          <CosbyGhost key={ghost.id} {...ghost} />
-        ))}
+        {isCosbyMode && (
+          <>
+            {ghosts.map(ghost => <CosbyGhost key={ghost.id} {...ghost} />)}
+            {passingMemes.map(meme => <PassingMeme key={meme.id} {...meme} />)}
+          </>
+        )}
       </AnimatePresence>
 
-      <nav className="bg-[#2b506f] text-white text-[10px] py-2.5 px-4 flex flex-wrap justify-between items-center border-b border-[#1a3144] sticky top-0 z-40 shadow-lg">
+      {/* Official CA Glitch Banner */}
+      <div 
+        onClick={copyCA}
+        className={`sticky top-0 z-[60] w-full text-center py-2.5 transition-all cursor-pointer select-none overflow-hidden ${
+          isCosbyMode 
+          ? 'bg-red-700/90 backdrop-blur-md border-b border-white/20' 
+          : 'bg-[#2b506f] border-b border-black/20'
+        }`}
+      >
+        <div className="flex items-center justify-center gap-3 font-black tracking-[0.15em] text-[10px] md:text-xs text-white">
+          <motion.div animate={isCosbyMode ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 1 }}>
+            <Zap size={14} className="fill-current text-yellow-400" />
+          </motion.div>
+          <span className="opacity-70 uppercase"> CONTRACT ADDRESS:</span>
+          <span className="font-mono">{OFFICIAL_CA}</span>
+          <span className={`bg-white/20 px-2 py-0.5 rounded text-[8px] transition-all ${caCopied ? 'bg-green-500 scale-110' : ''}`}>
+            {caCopied ? 'COPIED!' : 'TAP TO COPY'}
+          </span>
+        </div>
+      </div>
+
+      <nav className="bg-[#2b506f] text-white text-[10px] py-2.5 px-4 flex flex-wrap justify-between items-center border-b border-[#1a3144] sticky top-[41px] z-40 shadow-lg">
         <div className="flex gap-4 sm:gap-6 font-bold uppercase tracking-wider">
           <a href="#" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><Globe size={13} /> Home</a>
           <a href="https://web.archive.org/web/20111025203743/http://cosbycoin.org/" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><History size={13} /> Archive (2011)</a>
@@ -476,7 +543,10 @@ const App = () => {
               <p className={`text-sm md:text-lg italic font-medium max-w-md ${isCosbyMode ? 'text-gray-400' : 'text-gray-600'}`}>"The most important altcoin you've never heard of... until now."</p>
             </div>
           </div>
-          <button onClick={() => setIsCosbyMode(!isCosbyMode)} className={`px-8 py-4 rounded-sm font-black text-sm uppercase tracking-widest border-2 transition-all shadow-[8px_8px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none ${isCosbyMode ? 'bg-red-700 border-white text-white hover:bg-red-600' : 'bg-white border-[#2b506f] text-[#2b506f] hover:bg-gray-50'}`}>{isCosbyMode ? "Cosby Mode: Active" : "Restore History"}</button>
+          <div className="flex flex-col gap-2">
+            <button onClick={() => setIsCosbyMode(!isCosbyMode)} className={`px-8 py-4 rounded-sm font-black text-sm uppercase tracking-widest border-2 transition-all shadow-[8px_8px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none ${isCosbyMode ? 'bg-red-700 border-white text-white hover:bg-red-600' : 'bg-white border-[#2b506f] text-[#2b506f] hover:bg-gray-50'}`}>{isCosbyMode ? "Cosby Mode: Active" : "Restore History"}</button>
+            <p className="text-[9px] text-center opacity-40 font-bold uppercase tracking-widest">Click to engage defacement</p>
+          </div>
         </div>
       </header>
 
@@ -524,7 +594,7 @@ const App = () => {
 
       <AnimatePresence>
         {showPopup && (
-          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto p-4">
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto p-4">
             <div className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] p-1 shadow-2xl max-w-[360px] w-full">
               <div className="bg-[#000080] text-white flex justify-between items-center px-2 py-1 text-xs font-bold mb-1">
                 <span className="flex items-center gap-2"><Terminal size={12}/> System Alert</span>
