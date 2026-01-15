@@ -1137,7 +1137,7 @@ const App = () => {
                   disabled={!uploadImage || isGenerating} 
                   className={`w-full py-4 bg-current text-current-bg font-black uppercase text-[10px] tracking-[0.5em] transition-all relative overflow-hidden
                     ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}
-                    ${(!uploadImage || isGenerating) ? 'opacity-20 cursor-not-allowed' : 'hover:opacity-80 active:translate-y-1'}`}
+                    ${(!uploadImage || isGenerating) ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80 active:translate-y-1'}`}
                 >
                   {/* Progress Fill Layer */}
                   <div 
