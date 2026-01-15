@@ -987,7 +987,7 @@ const App = () => {
       3. EXTRACT ONLY THE MAIN SUBJECT from Image 1. 
       4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital sketch style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
-      6. PLACE this subject at the absolute far-right edge of the new sketchy canvas, you can be clever and creative in how you put it at the right depending on what will fit the subject, as long as you dont change his main looks and appearance, for example you might change the subject pose to be more right, turn their head make them point with thei hands etc, anything that can show the subject's obsession over the right direction. 
+      6. PLACE this subject at the absolute far-right edge of the new sketchy canvas, you can be clever and creative in how you put it at the right depending on what will fit the subject, as long as you dont change his main looks and appearance, for example you might change the subject pose to be more right, turn their head make them point with thei hands etc, anything that can show the subject's obsession over the right direction. the assignment is to physically make the subject look like he has been born to be at the right, and show it in whatever way it can, to make people understand that him being right is intentional. 
       7. Leave the remaining 70% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
       8. On top of the newly drawn background, add a small, hand-written, sketchy text element that feels naturally placed in the composition.
       The text must include the word “right”, but must never be the same phrase twice.
@@ -1055,7 +1055,7 @@ const App = () => {
         
         <div className="flex flex-col items-end gap-3 mt-10">
           <button onClick={() => setView('world')} className={`flex items-center gap-3 text-[10px] font-black justify-end text-right uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
-            Make things right <MoveRight size={14} />
+            RIGHTIFY <MoveRight size={14} />
           </button>
           <button onClick={() => setView('governance')} className={`flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] px-6 py-3 border border-current hover:bg-current hover:text-current-bg transition-all ${darkMode ? 'border-white/20 hover:bg-white hover:text-black shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'border-black/20 hover:bg-black hover:text-white shadow-[0_0_20px_rgba(0,0,0,0.05)]'}`}>
             The Ledger <BarChart3 size={14} />
@@ -1109,7 +1109,7 @@ const App = () => {
                   {uploadImage && <img src={uploadImage} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />}
                   <div className="relative z-10 flex flex-col items-center gap-2 text-center text-current opacity-40 uppercase font-black text-[9px] tracking-widest">
                     <ImageIcon size={20} />
-                    <span>Load Source</span>
+                    <span>Load meme</span>
                   </div>
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </label>
@@ -1122,7 +1122,7 @@ const App = () => {
                     ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}
                     ${(!uploadImage || isGenerating) ? 'opacity-20 cursor-not-allowed' : 'hover:opacity-80 active:translate-y-1'}`}
                 >
-                  {isGenerating ? "Processing Artifact..." : "MAKE IT RIGHT"}
+                  {isGenerating ? "Processing..." : "MAKE IT RIGHT"}
                 </button>
 
                 {generatedMeme && (
