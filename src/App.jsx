@@ -364,7 +364,7 @@ const ChatApp = ({ darkMode }) => {
           <input 
             value={inputText} 
             onChange={(e) => setInputText(e.target.value)} 
-            placeholder={isSending ? "UPLINKING..." : "ENTER_SIGNAL..."} 
+            placeholder={isSending ? "cosbing..." : "say something..."} 
             disabled={isSending} 
             className={`flex-1 bg-transparent border-b-2 py-2 px-1 text-sm font-black italic outline-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} 
           />
@@ -411,7 +411,7 @@ const App = () => {
           <a href="https://www.itnews.com.au/news/bitcoin-forum-hijacked-by-frustrated-donor-276685" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><FileText size={13} /> News Coverage</a>
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
-          <a href="https://x.com" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10">
+          <a href="https://x.comhttps://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10">
             <Twitter size={12} fill="currentColor" /> X.COM
           </a>
           <span className="opacity-50 italic hidden lg:inline">Established Oct 25, 2011</span>
