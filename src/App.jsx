@@ -22,7 +22,7 @@ import {
   ExternalLink, 
   Terminal, 
   History,
-  ShieldAlert,
+  ShieldAlert, 
   Zap,
   MessageSquare,
   Twitter,
@@ -52,10 +52,19 @@ import {
 // --- CONSTANTS & CONFIGURATION ---
 const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
 
-// API Key (Instructional Mandate: Always set to empty string)
-const apiKey = ""; 
-
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+// Environment-safe API Key Logic (Restored from successful project)
+const apiKey = (() => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SECTION) return import.meta.env.VITE_SECTION;
+  } catch (e) {}
+  try {
+    if (typeof process !== 'undefined' && process.env?.VITE_SECTION) return process.env.VITE_SECTION;
+  } catch (e) {}
+  try {
+    if (typeof window !== 'undefined' && window.VITE_SECTION) return window.VITE_SECTION;
+  } catch (e) {}
+  return typeof __apiKey !== 'undefined' ? __apiKey : "";
+})();
 
 const AVATAR_LIST = [
   { id: 'pepe', name: 'PEPE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=pepe' },
@@ -397,12 +406,14 @@ const PassingMeme = ({ src, direction }) => (
 );
 
 // --- AI MEME GENERATOR COMPONENT ---
+// REMADE FROM SCRATCH using "Make Things Right" architectural logic
 const MemeGenerator = ({ darkMode, onBack }) => {
   const [prompt, setPrompt] = useState("");
-  const [generating, setGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [memeResult, setMemeResult] = useState(null);
   const [uploadBase64, setUploadBase64] = useState(null);
   const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0); // Restored progress logic
 
   const handleUpload = (e) => {
     const file = e.target.files?.[0];
@@ -412,61 +423,89 @@ const MemeGenerator = ({ darkMode, onBack }) => {
     reader.readAsDataURL(file);
   };
 
-  const generateMeme = async (random = false) => {
-    setGenerating(true);
+  const executeGeneration = async (random = false) => {
+    setIsGenerating(true);
     setError(null);
-    
-    // FIX: Exponential Backoff for API Reliability
-    const fetchWithRetry = async (retries = 5, delay = 1000) => {
-      try {
-        const templateBase64 = await getBase64FromUrl('template.jpg');
-        const backgroundBase64 = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
-        
-        const userInstruction = random 
-          ? "Generate a hilarious random meme quote, fake fact, or historical snippet about the 2011 CosbyCoin Bitcointalk hijack. Professional quality placement."
-          : `Professionally place the following text onto this image: "${prompt}". If this is the template with a central box, place the text exactly inside that box using a font and color that matches the site's aesthetic. If this is a custom image, place the text centered and use a color that provides maximum professional contrast.`;
+    setProgress(0);
 
-        const response = await fetch(GEMINI_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+    // Progress Simulation Logic (Restored from successful project)
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 92) return prev;
+        return prev + 2;
+      });
+    }, 150);
+    
+    try {
+      const templateBase64 = await getBase64FromUrl('template.jpg');
+      const base64Data = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
+      
+      const userInstruction = random 
+        ? "Generate a hilarious random meme quote about the 2011 CosbyCoin Bitcointalk hijack. Use a font and color that matches the site's aesthetic."
+        : `Professionally place the following text onto this image: "${prompt}". Use a font and color that matches the site's aesthetic.`;
+
+      const promptPayload = `Perform an Artistic Signal Correction:
+      1. Reference Image 1 (Subject) and Image 2 (Template Canvas).
+      2. Use Image 2 as your rigid canvas for the final output size and ratio.
+      3. Process the text: ${userInstruction}
+      4. Place the extracted or modified subject onto the template.
+      5. Ensure professional contrast and historical accuracy to the 2011 Bitcointalk hijack style.
+      6. OUTPUT MUST BE IMAGE DATA ONLY.`;
+
+      const fetchWithRetry = async (retries = 5, delay = 1000) => {
+        // FIXED: URL Re-constructed inside the scope to pick up environmental apiKey
+        const dynamicGeminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+        const response = await fetch(dynamicGeminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{
               parts: [
-                { text: userInstruction },
-                { inlineData: { mimeType: "image/jpeg", data: backgroundBase64 } }
+                { text: promptPayload }, 
+                { inlineData: { mimeType: "image/png", data: base64Data } },
+                { inlineData: { mimeType: "image/png", data: templateBase64 } }
               ]
             }],
             generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
           })
         });
 
-        if (!response.ok) throw new Error(`API error ${response.status}`);
-        
-        const result = await response.json();
-        const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-        
-        if (base64) {
-          setMemeResult(`data:image/png;base64,${base64}`);
-        } else {
-          throw new Error("No image data returned.");
+        if (!response.ok) {
+           const errBody = await response.json().catch(() => ({}));
+           throw new Error(errBody.error?.message || "Signal Interrupt");
         }
-      } catch (err) {
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, delay));
-          return fetchWithRetry(retries - 1, delay * 2);
-        }
-        throw err;
-      }
-    };
 
-    try {
+        const result = await response.json();
+        const base64Image = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+        
+        if (base64Image) {
+           setProgress(100);
+           setMemeResult(`data:image/png;base64,${base64Image}`);
+        } else {
+           const finishReason = result.candidates?.[0]?.finishReason;
+           if (finishReason === "SAFETY") throw new Error("Safety Protocol Blocked Output.");
+           throw new Error("Empty Signal Returned.");
+        }
+      };
+
       await fetchWithRetry();
-    } catch (e) {
-      console.error(e);
-      setError("AI Uplink Disrupted. Try again in a moment.");
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Defacement Failed. Retry.");
     } finally {
-      setGenerating(false);
+      clearInterval(progressInterval);
+      setIsGenerating(false);
+      setTimeout(() => setProgress(0), 1000);
     }
+  };
+
+  const downloadMeme = () => {
+    if (!memeResult) return;
+    const link = document.createElement('a');
+    link.href = memeResult;
+    link.download = 'cosby_history.png';
+    link.click();
   };
 
   return (
@@ -475,24 +514,31 @@ const MemeGenerator = ({ darkMode, onBack }) => {
         <button onClick={onBack} className="flex items-center gap-2 text-xs font-black uppercase hover:text-red-500 transition-colors">
           <ArrowLeft size={16} /> Back to Forum
         </button>
-        <span className="text-[10px] font-black tracking-widest uppercase italic">AI Meme Protocol v2.5</span>
+        <span className="text-[10px] font-black tracking-widest uppercase italic">AI Defacement Protocol v3.0</span>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row p-6 gap-8 overflow-y-auto">
         <div className="w-full md:w-1/3 space-y-6 text-left">
           <div className="space-y-4">
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600">Meme Uplink</h2>
-            <p className="text-xs opacity-60">Type your message or generate a random piece of 2011 lore.</p>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600 leading-none">History Architect</h2>
+            <p className="text-xs opacity-60">Alter the narrative. Deface the established order.</p>
           </div>
+          
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase opacity-40">Meme Content</label>
-            <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="ENTER MEME TEXT..." className={`w-full h-32 bg-transparent border-2 p-3 outline-none text-sm font-bold resize-none ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} />
+            <label className="text-[10px] font-black uppercase opacity-40">Artifact Script</label>
+            <textarea 
+              value={prompt} 
+              onChange={(e) => setPrompt(e.target.value)} 
+              placeholder="ENTER MEME TEXT..." 
+              className={`w-full h-32 bg-transparent border-2 p-3 outline-none text-sm font-bold resize-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} 
+            />
           </div>
+
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase opacity-40">Custom Background (Optional)</label>
+            <label className="text-[10px] font-black uppercase opacity-40">Source Material (Optional)</label>
             <div className="flex gap-2">
               <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 border-2 border-dashed border-current p-4 hover:bg-current hover:bg-opacity-5 transition-all text-xs font-bold uppercase">
-                <Upload size={16} /> {uploadBase64 ? 'Image Loaded' : 'Upload BG'}
+                <Upload size={16} /> {uploadBase64 ? 'Material Loaded' : 'Upload Source'}
                 <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
               </label>
               {uploadBase64 && (
@@ -500,29 +546,60 @@ const MemeGenerator = ({ darkMode, onBack }) => {
               )}
             </div>
           </div>
+
           <div className="flex flex-col gap-2">
-            <button disabled={generating || (!prompt.trim() && !uploadBase64)} onClick={() => generateMeme(false)} className="w-full py-4 bg-red-700 text-white font-black uppercase text-sm tracking-widest hover:bg-red-600 disabled:opacity-30 transition-all flex items-center justify-center gap-2">{generating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />} Execute Generation</button>
-            <button disabled={generating} onClick={() => generateMeme(true)} className="w-full py-4 border-2 border-current font-black uppercase text-sm tracking-widest hover:bg-current hover:bg-opacity-5 transition-all flex items-center justify-center gap-2"><RefreshCw size={18} className={generating ? 'animate-spin' : ''} /> Random Lore</button>
+            {/* RESTORED: BUTTON with PROGRESS VISUAL logic */}
+            <button 
+              disabled={isGenerating || (!prompt.trim() && !uploadBase64)} 
+              onClick={() => executeGeneration(false)} 
+              className={`w-full py-4 bg-red-700 text-white font-black uppercase text-sm tracking-widest transition-all relative overflow-hidden flex items-center justify-center gap-2 shadow-[4px_4px_0px_rgba(0,0,0,0.3)] active:translate-y-1 active:shadow-none disabled:opacity-30`}
+            >
+              <div 
+                className="absolute top-0 left-0 h-full bg-white/20 transition-all duration-300 ease-out pointer-events-none"
+                style={{ width: `${progress}%` }}
+              />
+              <span className="relative z-10">{isGenerating ? "Processing..." : "Execute Correction"}</span>
+            </button>
+            <button 
+              disabled={isGenerating} 
+              onClick={() => executeGeneration(true)} 
+              className="w-full py-4 border-2 border-current font-black uppercase text-sm tracking-widest hover:bg-current hover:bg-opacity-5 transition-all flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={18} className={isGenerating ? 'animate-spin' : ''} /> Random Archive
+            </button>
           </div>
-          {error && <div className="p-3 bg-red-900/20 border border-red-900 text-red-500 text-[10px] font-black uppercase text-center">{error}</div>}
+          
+          {error && (
+            <div className="p-3 bg-red-900/20 border border-red-900 text-red-500 text-[10px] font-black uppercase text-center break-words animate-pulse">
+              {error}
+            </div>
+          )}
         </div>
+
         <div className="flex-1 flex flex-col items-center justify-center border-4 border-dashed border-current border-opacity-10 rounded-xl relative min-h-[400px]">
           <AnimatePresence mode="wait">
             {memeResult ? (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full h-full flex flex-col items-center justify-center p-4 gap-4" key="result">
-                <img src={memeResult} className="max-w-full max-h-[70vh] shadow-2xl border-4 border-white" alt="Result" />
-                <a href={memeResult} download="cosbycoin_meme.png" className="px-6 py-2 bg-black text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-red-700 transition-colors"><Download size={14} /> Download Protocol</a>
+                <img src={memeResult} className="max-w-full max-h-[70vh] shadow-2xl border-4 border-white" alt="Protocol Result" />
+                <button 
+                  onClick={downloadMeme} 
+                  className="px-8 py-3 bg-black text-white rounded-none border-2 border-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-red-700 transition-colors italic"
+                >
+                  <Download size={14} /> Download Protocol
+                </button>
               </motion.div>
             ) : (
               <div className="text-center space-y-4 opacity-20" key="waiting">
                 <ImagePlus size={64} className="mx-auto" />
-                <p className="text-xs font-black uppercase tracking-widest italic">Awaiting AI Uplink...</p>
+                <p className="text-xs font-black uppercase tracking-widest italic">Awaiting AI Signal Uplink...</p>
               </div>
             )}
           </AnimatePresence>
-          {generating && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white gap-4">
-              <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={48} className="fill-current text-yellow-400" /></motion.div>
+          {isGenerating && (
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-50 text-white gap-4">
+              <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                <Zap size={48} className="fill-current text-yellow-400" />
+              </motion.div>
               <p className="font-mono text-xs uppercase tracking-[0.5em] animate-pulse">Calculating Defacement...</p>
             </div>
           )}
