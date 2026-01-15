@@ -67,12 +67,13 @@ const apiKey = (() => {
 })();
 
 const AVATAR_LIST = [
-  { id: 'pepe', name: 'PEPE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=pepe' },
-  { id: 'doge', name: 'DOGE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=doge' },
-  { id: 'wif', name: 'WIF', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=wif' },
-  { id: 'wojak', name: 'WOJAK', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=wojak' },
-  { id: 'bonk', name: 'DETECTIVE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=detective' },
-  { id: 'mask', name: 'MASK', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=mask' },
+  { id: 'pepe', name: 'PEPE', url: '/pfps/pepe.jpg' },
+  { id: 'doge', name: 'DOGE', url: '/pfps/doge.jpg' },
+  { id: 'wif', name: 'WIF', url: '/pfps/wif.jpg' },
+  { id: 'wojak', name: 'WOJAK', url: '/pfps/wojak.jpg' },
+  { id: 'bonk', name: 'DETECTIVE', url: '/pfps/detective.jpg' },
+  { id: 'mask', name: 'MASK', url: '/pfps/mask.jpg' },
+
 ];
 
 const COLOR_LIST = [
@@ -630,7 +631,6 @@ const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, sta
       <div className="ml-auto flex-shrink-0"><Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} /></div>
     </div>
     <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>{text}</p>
-    {image && <div className="rounded-2xl border border-gray-200 overflow-hidden mb-3"><img src={image} alt="Tweet Content" className="w-full h-auto object-cover" /></div>}
     <div className="flex items-center justify-between text-gray-500 px-1">
       <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
       <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
