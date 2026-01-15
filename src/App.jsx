@@ -987,7 +987,7 @@ const App = () => {
       3. EXTRACT ONLY THE MAIN SUBJECT from Image 1. 
       4. RE-DRAW the entire background of Image 1 on the Image 2 canvas in a messy, hand-drawn digital paint style. It should feel artistic and sketchy, not a photo. and must fill the whole frame. 
       5. SHRINK the extracted subject from Image 1 a bit, only if it is too big. 
-      6. PLACE this subject at the absolute far-right edge of the new sketchy canvas.
+      6. PLACE this subject at the absolute far-right edge of the new sketchy canvas, you can be clever and creative in how you put it at the right depending on what will fit the subject, as long as you dont change his main looks and appearance
       7. Leave the remaining 70% of the image to the left completely empty of subjects, showing only the simplified sketchy background.
       8. On top of the newly drawn background, add a small, hand-written, sketchy text element that feels naturally placed in the composition.
       The text must include the word “right”, but must never be the same phrase twice.
@@ -1122,7 +1122,7 @@ const App = () => {
                     ${darkMode ? 'bg-white text-black' : 'bg-black text-white'}
                     ${(!uploadImage || isGenerating) ? 'opacity-20 cursor-not-allowed' : 'hover:opacity-80 active:translate-y-1'}`}
                 >
-                  {isGenerating ? "Processing Artifact..." : "Enforce Right Bias"}
+                  {isGenerating ? "Processing Artifact..." : "MAKE IT RIGHT"}
                 </button>
 
                 {generatedMeme && (
