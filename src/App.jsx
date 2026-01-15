@@ -37,13 +37,12 @@ import {
   ChevronDown,
   User,
   Copy,
-  Volume2,
-  VolumeX,
-  SkipForward
+  MessageCircle,
+  Heart,
+  Share2
 } from 'lucide-react';
 
 // --- CONFIGURATION ---
-// Using environment variables as required for the execution environment
 const firebaseConfig = typeof __firebase_config !== 'undefined' 
   ? JSON.parse(__firebase_config) 
   : {
@@ -56,12 +55,12 @@ const firebaseConfig = typeof __firebase_config !== 'undefined'
     };
 
 const AVATAR_LIST = [
-   { id: 'pepe', name: 'PEPE', url: '/pfps/pepe.jpg' },
-  { id: 'doge', name: 'DOGE', url: '/pfps/doge.jpg' },
-  { id: 'wif', name: 'WIF', url: '/pfps/wif.jpg' },
-  { id: 'wojak', name: 'WOJAK', url: '/pfps/wojak.jpg' },
-  { id: 'bonk', name: 'DETECTIVE', url: '/pfps/detective.jpg' },
-  { id: 'mask', name: 'MASK', url: '/pfps/mask.jpg' },
+  { id: 'pepe', name: 'PEPE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=pepe' },
+  { id: 'doge', name: 'DOGE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=doge' },
+  { id: 'wif', name: 'WIF', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=wif' },
+  { id: 'wojak', name: 'WOJAK', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=wojak' },
+  { id: 'bonk', name: 'DETECTIVE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=detective' },
+  { id: 'mask', name: 'MASK', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=mask' },
 ];
 
 const COLOR_LIST = [
@@ -79,12 +78,35 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+// --- MEDIA SPOTLIGHT DATA ---
+const MEDIA_POSTS = [
+  {
+    id: 'tweet-buttcoin-1',
+    name: 'Buttcoin',
+    handle: '@buttcoin',
+    avatar: 'buttcoin.jpg',
+    text: 'Dear @EdandEthan, have you considered Buttcoin or perhaps Cosbycoin? cc @DreamHostBrett',
+    image: 'photo_2026-01-15_09-33-29.jpg',
+    link: 'https://x.com/buttcoin',
+    stats: { replies: '8.2k', retweets: '4.1k', likes: '22.4k' }
+  },
+  {
+    id: 'tweet-buttcoin-2',
+    name: 'Buttcoin',
+    handle: '@buttcoin',
+    avatar: 'buttcoin.jpg',
+    text: 'You learned about Bitcoin from DeFi ponzis and Matt Damon. I learned it from dog dick coffee table and CosbyCoin./br /br We are not the same.',
+    image: 'photo_2026-01-15_09-48-19.jpg',
+    link: 'https://x.com/ButtCoin/status/1600962725277880320?s=20',
+    stats: { replies: '3.1k', retweets: '1.2k', likes: '15.9k' }
+  }
+];
+
 // --- CHAT COMPONENT ---
 const ChatApp = ({ darkMode }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState(""); 
   const [userColor, setUserColor] = useState(COLOR_LIST[5].hex);
   const [userAvatar, setUserAvatar] = useState(AVATAR_LIST[5].url);
   const [isSetup, setIsSetup] = useState(false);
@@ -102,7 +124,6 @@ const ChatApp = ({ darkMode }) => {
   const touchStartPos = useRef({ x: 0, y: 0 });
   const CA_INTERNAL = "3vsKvFYRbn5Mrfk5mJsxEDto2UwmrcWtqvC5o7SYpump";
 
-  // RULE 3 - Mandatory Auth Pattern
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -128,33 +149,25 @@ const ChatApp = ({ darkMode }) => {
     return () => unsubscribe();
   }, []);
 
-  // Sync Messages with Auth Guard
   useEffect(() => {
     if (!user || !db) return;
-    
-    // Path: /artifacts/{appId}/public/data/{collectionName}
     const msgCollection = collection(db, 'artifacts', appId, 'public', 'data', 'trollbox_messages');
-    
-    // RULE 2 - Simple collection query with in-memory sorting
     const unsubscribe = onSnapshot(msgCollection, (snapshot) => {
       if (snapshot.empty) {
         setMessages([]);
         return;
       }
-      
       const msgs = snapshot.docs.map(doc => {
         const data = doc.data();
         let ts = data.timestamp?.toDate ? data.timestamp.toDate().getTime() : (data.timestamp || Date.now());
         return { id: doc.id, ...data, _sortTs: ts };
       });
-      
       const sorted = msgs.sort((a, b) => a._sortTs - b._sortTs);
       setMessages(sorted.slice(-100));
       setTimeout(() => scrollToBottom(), 100);
     }, (err) => {
       console.error("Firestore sync error:", err);
     });
-    
     return () => unsubscribe();
   }, [user]);
 
@@ -206,7 +219,7 @@ const ChatApp = ({ darkMode }) => {
       });
       setTimeout(() => scrollToBottom(), 150);
     } catch (err) { 
-      setError("Uplink failed. Check connection."); 
+      setError("Uplink failed."); 
     } finally { 
       setIsSending(false); 
     }
@@ -225,29 +238,21 @@ const ChatApp = ({ darkMode }) => {
       <div className={`w-full h-full p-8 flex flex-col bg-white/5 backdrop-blur-sm animate-fade-in ${darkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="mb-6 border-b-2 border-red-600/30 pb-4">
           <h4 className="text-sm font-black uppercase tracking-widest text-red-600 italic">Identify Yourself</h4>
-          <p className="text-[10px] opacity-50 uppercase mt-1">Establishing Forum Node...</p>
         </div>
         <div className="space-y-6 flex-1">
-          <div className="space-y-2">
-            <input 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value.toUpperCase())} 
-              placeholder="ALIAS" 
-              className={`w-full bg-transparent border-b-2 border-current py-3 outline-none text-2xl font-black italic tracking-tighter transition-all ${darkMode ? 'focus:border-white' : 'focus:border-black'}`}
-            />
-          </div>
+          <input value={username} onChange={(e) => setUsername(e.target.value.toUpperCase())} placeholder="ALIAS" className={`w-full bg-transparent border-b-2 border-current py-3 outline-none text-2xl font-black italic tracking-tighter ${darkMode ? 'focus:border-white' : 'focus:border-black'}`} />
           <div>
-            <span className="text-[10px] font-black uppercase opacity-40 block mb-3 tracking-widest">Avatar Selection</span>
+            <span className="text-[10px] font-black uppercase opacity-40 block mb-3">Avatar Selection</span>
             <div className="grid grid-cols-6 gap-2">
               {AVATAR_LIST.map(av => (
-                <button key={av.id} onClick={() => setUserAvatar(av.url)} className={`aspect-square border-2 transition-all p-0.5 ${userAvatar === av.url ? 'border-red-600 scale-110 shadow-lg' : 'border-transparent opacity-40 hover:opacity-100'}`}>
+                <button key={av.id} onClick={() => setUserAvatar(av.url)} className={`aspect-square border-2 transition-all p-0.5 ${userAvatar === av.url ? 'border-red-600 scale-110' : 'border-transparent opacity-40'}`}>
                   <img src={av.url} className="w-full h-full object-cover" alt="" />
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase opacity-40 block mb-3 tracking-widest">Color Signature</span>
+            <span className="text-[10px] font-black uppercase opacity-40 block mb-3">Color Signature</span>
             <div className="flex gap-3">
               {COLOR_LIST.map(c => (
                 <button key={c.id} onClick={() => setUserColor(c.hex)} className={`w-8 h-8 rounded-full border-2 transition-all ${userColor === c.hex ? 'border-white scale-125 shadow-md' : 'border-transparent opacity-40'}`} style={{ backgroundColor: c.hex }} />
@@ -255,9 +260,7 @@ const ChatApp = ({ darkMode }) => {
             </div>
           </div>
         </div>
-        <button onClick={handleJoin} className="w-full py-4 bg-red-700 text-white font-black uppercase text-xs tracking-[0.4em] hover:bg-red-600 transition-all mt-6 shadow-xl border border-white/10 italic">
-          Join the Protest
-        </button>
+        <button onClick={handleJoin} className="w-full py-4 bg-red-700 text-white font-black uppercase text-xs tracking-[0.4em] hover:bg-red-600 transition-all mt-6">Join Protest</button>
         {error && <p className="text-red-500 text-[10px] uppercase font-black mt-4 text-center">{error}</p>}
       </div>
     );
@@ -266,61 +269,41 @@ const ChatApp = ({ darkMode }) => {
   return (
     <div className="flex flex-col w-full h-full font-mono relative select-none" onClick={() => { setContextMenu(null); setActiveMenu(null); }}>
       <div className="bg-black text-white px-4 py-2 flex items-center justify-between border-b border-white/10">
-        <span className="text-[10px] font-black text-red-500 uppercase tracking-widest italic animate-pulse flex items-center gap-2">
-          <ShieldAlert size={12}/> HACK_LIVE
-        </span>
+        <span className="text-[10px] font-black text-red-500 uppercase tracking-widest italic animate-pulse flex items-center gap-2"><ShieldAlert size={12}/> HACK_LIVE</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 cursor-pointer group" onClick={() => copyToClipboard(CA_INTERNAL)}>
             <span className="text-[9px] opacity-40 group-hover:opacity-100 uppercase tracking-tighter transition-opacity">CA: {CA_INTERNAL.slice(0, 10)}...</span>
             <Copy size={10} className={`${copiedCA ? 'text-green-500' : 'opacity-20'}`} />
           </div>
-          <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu ? null : 'settings'); }} className="opacity-40 hover:opacity-100 transition-opacity"><Settings size={14}/></button>
+          <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu ? null : 'settings'); }} className="opacity-40 hover:opacity-100"><Settings size={14}/></button>
         </div>
       </div>
-
-      <div 
-        ref={scrollRef} 
-        onScroll={(e) => { const { scrollTop, scrollHeight, clientHeight } = e.currentTarget; setShowScrollDown(scrollHeight - scrollTop - clientHeight > 300); }}
-        className={`flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar scroll-smooth relative ${darkMode ? 'bg-black/40' : 'bg-gray-50'}`}
-      >
-        {messages.length === 0 && !error && (
-          <div className="h-full flex flex-col items-center justify-center opacity-20 text-center space-y-2">
-            <Terminal size={40} />
-            <p className="text-[10px] uppercase tracking-widest">Listening for signals...</p>
-          </div>
-        )}
+      <div ref={scrollRef} onScroll={(e) => { const { scrollTop, scrollHeight, clientHeight } = e.currentTarget; setShowScrollDown(scrollHeight - scrollTop - clientHeight > 300); }} className={`flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar scroll-smooth relative ${darkMode ? 'bg-black/40' : 'bg-gray-50'}`}>
         {messages.map((msg) => {
           const isMe = msg.uid === user?.uid;
           const hasReactions = msg.reactions && Object.values(msg.reactions).some(v => v > 0);
           return (
             <div 
               key={msg.id} 
-              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`}
-              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }}
-              onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }}
-              onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }}
-              onTouchEnd={() => clearTimeout(longPressTimer.current)}
+              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in group/msg`} 
+              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, msg }); }} 
+              onTouchStart={(e) => { touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; longPressTimer.current = setTimeout(() => { setContextMenu({ x: e.touches[0].clientX, y: e.touches[0].clientY, msg }); }, 600); }} 
+              onTouchMove={(e) => { if (Math.abs(e.touches[0].clientX - touchStartPos.current.x) > 10 || Math.abs(e.touches[0].clientY - touchStartPos.current.y) > 10) clearTimeout(longPressTimer.current); }} 
+              onTouchEnd={() => clearTimeout(longPressTimer.current)} 
               onDoubleClick={() => handleReaction(msg.id, 'heart')}
             >
               <div className={`flex items-center gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
                 <img src={msg.avatar} className="w-4 h-4 object-cover border border-current opacity-70" alt="" />
                 <span className="text-[10px] font-black uppercase italic tracking-tighter" style={{ color: msg.color }}>{msg.user}</span>
-                <span className="text-[7px] opacity-10 hidden group-hover/msg:inline uppercase">{msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
               </div>
-              <div 
-                className={`relative px-4 py-2 max-w-[90%] border-r-4 text-[11px] font-bold shadow-sm cursor-pointer transition-all ${
-                  isMe ? 'bg-[#2b506f] text-white border-red-600' : (darkMode ? 'bg-white/5 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300 shadow-black/5')
-                }`}
-              >
+              <div className={`relative px-4 py-2 max-w-[90%] border-r-4 text-[11px] font-bold shadow-sm cursor-pointer transition-all ${isMe ? 'bg-[#2b506f] text-white border-red-600' : (darkMode ? 'bg-white/5 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300')}`}>
                   {msg.replyTo && <div className="text-[9px] opacity-40 mb-2 border-l-2 border-current pl-2 italic bg-black/5 p-1 truncate">@{msg.replyTo.user}: {msg.replyTo.text}</div>}
                   <p className="break-words whitespace-pre-wrap leading-relaxed">{msg.text}</p>
               </div>
               {hasReactions && (
                 <div className={`flex gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                   {Object.entries(msg.reactions).map(([key, count]) => count > 0 && (
-                    <button key={key} onClick={(e) => { e.stopPropagation(); handleReaction(msg.id, key); }} className="bg-black/10 px-1.5 py-0.5 rounded text-[8px] font-black flex items-center gap-1 hover:bg-black/20 transition-all">
-                      {key === 'heart' ? '❤️' : '👌'} <span>{count}</span>
-                    </button>
+                    <button key={key} onClick={(e) => { e.stopPropagation(); handleReaction(msg.id, key); }} className="bg-black/10 px-1.5 py-0.5 rounded text-[8px] font-black flex items-center gap-1 transition-all">{key === 'heart' ? '❤️' : '👌'} <span>{count}</span></button>
                   ))}
                 </div>
               )}
@@ -328,13 +311,11 @@ const ChatApp = ({ darkMode }) => {
           );
         })}
       </div>
-
       {showScrollDown && (
         <button onClick={() => scrollToBottom()} className="absolute bottom-24 right-6 z-[70] p-3 rounded-full shadow-2xl animate-bounce transition-opacity bg-red-700 text-white hover:bg-red-600">
           <ChevronDown size={20} strokeWidth={3}/>
         </button>
       )}
-
       {activeMenu === 'settings' && (
         <div className={`absolute top-10 right-4 z-[90] p-4 border-2 shadow-2xl flex flex-col gap-4 animate-fade-in ${darkMode ? 'bg-gray-900 border-white/10 text-white' : 'bg-white border-gray-200 text-black'}`} onClick={e => e.stopPropagation()}>
           <button onClick={() => { setIsSetup(false); setActiveMenu(null); }} className="text-[10px] font-black uppercase flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity"><Palette size={14}/> Appearance</button>
@@ -342,7 +323,6 @@ const ChatApp = ({ darkMode }) => {
           <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-[10px] font-black uppercase text-red-500 flex items-center gap-3 hover:opacity-70 transition-opacity"><LogOut size={14}/> Reset Signal</button>
         </div>
       )}
-
       {contextMenu && (
         <div className="fixed z-[1000] p-1 border-2 shadow-2xl bg-[#1a1b1e] border-white/20 min-w-[120px] animate-scale-up" style={{ top: Math.min(contextMenu.y, window.innerHeight - 100), left: Math.min(contextMenu.x, window.innerWidth - 120) }} onClick={e => e.stopPropagation()}>
            <button onClick={() => { setReplyingTo(contextMenu.msg); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-white hover:text-black transition-colors"><Reply size={12}/> Reply</button>
@@ -352,7 +332,6 @@ const ChatApp = ({ darkMode }) => {
            </div>
         </div>
       )}
-
       <div className={`p-4 border-t ${darkMode ? 'border-white/10 bg-black/20' : 'border-gray-200 bg-white'}`}>
         {replyingTo && (
           <div className="flex justify-between items-center bg-red-900/10 p-2 mb-2 border-l-2 border-red-700 animate-fade-in">
@@ -361,13 +340,7 @@ const ChatApp = ({ darkMode }) => {
           </div>
         )}
         <form onSubmit={handleSend} className="flex gap-2">
-          <input 
-            value={inputText} 
-            onChange={(e) => setInputText(e.target.value)} 
-            placeholder={isSending ? "cosbing..." : "say something..."} 
-            disabled={isSending} 
-            className={`flex-1 bg-transparent border-b-2 py-2 px-1 text-sm font-black italic outline-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} 
-          />
+          <input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={isSending ? "UPLINKING..." : "ENTER_SIGNAL..."} disabled={isSending} className={`flex-1 bg-transparent border-b-2 py-2 px-1 text-sm font-black italic outline-none transition-all ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} />
           <button type="submit" disabled={!inputText.trim() || isSending} className={`p-2 transition-all ${isSending ? 'opacity-20' : 'hover:text-red-600'}`}><SendHorizontal size={20} /></button>
         </form>
       </div>
@@ -375,12 +348,54 @@ const ChatApp = ({ darkMode }) => {
   );
 };
 
+// --- AMBIENT GHOST COMPONENT ---
+const CosbyGhost = ({ src, x, y, scale }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.5 }}
+    animate={{ opacity: [0, 0.4, 0], scale: [0.5, scale, 0.5], x: [0, 20, -20, 0] }}
+    transition={{ duration: 4, ease: "easeInOut" }}
+    className="fixed pointer-events-none z-10"
+    style={{ left: x, top: y }}
+  >
+    <img src={src} className="w-48 md:w-64 grayscale opacity-30 shadow-2xl" alt="" />
+  </motion.div>
+);
+
+// --- X MOCKUP COMPONENT ---
+const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats }) => (
+  <a href={link || "#"} target="_blank" rel="noopener noreferrer" className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700' : 'bg-white border-gray-100 hover:border-gray-200'}`}>
+    <div className="flex items-center gap-3 mb-3">
+      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex-shrink-0">
+        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex flex-col overflow-hidden">
+        <div className="flex items-center gap-1">
+          <span className={`font-bold text-sm truncate ${isCosbyMode ? 'text-white' : 'text-black'}`}>{name}</span>
+          <div className="w-3.5 h-3.5 bg-[#1d9bf0] rounded-full flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current"><path d="M22.25 12c0-5.66-4.59-10.25-10.25-10.25S1.75 6.34 1.75 12c0 5.66 4.59 10.25 10.25 10.25S22.25 17.66 22.25 12zM10.5 17l-5-5 1.41-1.41L10.5 14.17l7.09-7.09L19 8.5 10.5 17z"/></svg>
+          </div>
+        </div>
+        <span className="text-gray-500 text-xs truncate">{handle}</span>
+      </div>
+      <div className="ml-auto flex-shrink-0"><Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} /></div>
+    </div>
+    <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>{text}</p>
+  
+    <div className="flex items-center justify-between text-gray-500 px-1">
+      <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
+      <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
+      <div className="flex items-center gap-1.5"><Heart size={14} /> <span className="text-[11px]">{stats?.likes || '0'}</span></div>
+    </div>
+  </a>
+);
+
 // --- MAIN APP ---
 const App = () => {
   const [isHacked, setIsHacked] = useState(false);
   const [isCosbyMode, setIsCosbyMode] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [glitchText, setGlitchText] = useState("BITCOIN FORUM");
+  const [ghosts, setGhosts] = useState([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsHacked(true), 1500);
@@ -400,9 +415,36 @@ const App = () => {
     }
   }, [isHacked]);
 
+  // Ambient Ghost Spawn Logic
+  useEffect(() => {
+    if (!isCosbyMode) {
+      setGhosts([]);
+      return;
+    }
+    const interval = setInterval(() => {
+      const id = Date.now();
+      const newGhost = {
+        id,
+        src: `cosby${Math.floor(Math.random() * 8) + 1}.jpg`,
+        x: Math.random() * 70 + 10 + '%',
+        y: Math.random() * 70 + 10 + '%',
+        scale: Math.random() * 0.4 + 0.6,
+      };
+      setGhosts(prev => [...prev.slice(-3), newGhost]); // Max 4 at once
+      setTimeout(() => setGhosts(prev => prev.filter(g => g.id !== id)), 4000);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isCosbyMode]);
+
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isCosbyMode ? 'bg-[#1a1b1e] text-white' : 'bg-[#e5e5e8] text-[#000000]'} font-sans antialiased overflow-x-hidden`}>
-      {/* Top Navigation */}
+      {/* Ghost Background Images */}
+      <AnimatePresence>
+        {isCosbyMode && ghosts.map(ghost => (
+          <CosbyGhost key={ghost.id} {...ghost} />
+        ))}
+      </AnimatePresence>
+
       <nav className="bg-[#2b506f] text-white text-[10px] py-2.5 px-4 flex flex-wrap justify-between items-center border-b border-[#1a3144] sticky top-0 z-40 shadow-lg">
         <div className="flex gap-4 sm:gap-6 font-bold uppercase tracking-wider">
           <a href="#" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><Globe size={13} /> Home</a>
@@ -411,168 +453,107 @@ const App = () => {
           <a href="https://www.itnews.com.au/news/bitcoin-forum-hacked-by-donor-271688" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><FileText size={13} /> News Coverage</a>
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
-          <a href="https://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10">
-            <Twitter size={12} fill="currentColor" /> X.COM
-          </a>
+          <a href="https://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10"><Twitter size={12} fill="currentColor" /> X.COM</a>
           <span className="opacity-50 italic hidden lg:inline">Established Oct 25, 2011</span>
         </div>
       </nav>
 
       {/* Hero Header */}
-      <header className="p-6 max-w-6xl mx-auto mt-4">
+      <header className="p-6 max-w-6xl mx-auto mt-4 relative z-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div className="flex items-center gap-6">
-            <motion.div 
-              animate={isHacked ? { rotate: [0, -4, 4, 0], scale: [1, 1.03, 1] } : {}} 
-              transition={{ duration: 0.6, repeat: isHacked ? Infinity : 0, repeatDelay: 4 }} 
-              className="relative group cursor-help"
-            >
+            <motion.div animate={isHacked ? { rotate: [0, -4, 4, 0], scale: [1, 1.03, 1] } : {}} transition={{ duration: 0.6, repeat: isHacked ? Infinity : 0, repeatDelay: 4 }} className="relative group cursor-help">
               <img src="logo.png" alt="CosbyCoin Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-2xl grayscale hover:grayscale-0 transition-all duration-500" onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=CosbyCoin"; }} />
-              {isHacked && <div className="absolute inset-0 bg-red-600/10 mix-blend-overlay animate-pulse rounded-full" />}
+              {isHacked && <div className="absolute inset-0 bg-red-600/10 animate-pulse rounded-full" />}
             </motion.div>
             <div className="space-y-1">
               <h1 className={`text-4xl md:text-6xl font-black tracking-tighter flex flex-col leading-none ${isCosbyMode ? 'text-white' : 'text-[#2b506f]'}`}>
-                <span className={`${isHacked ? 'line-through opacity-10 text-xl' : ''} transition-all duration-700 ease-in-out`}>BITCOIN FORUM</span>
+                <span className={`${isHacked ? 'line-through opacity-10 text-xl' : ''} transition-all duration-700`}>BITCOIN FORUM</span>
                 <AnimatePresence>
-                  {isHacked && (
-                    <motion.span initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="text-red-600 italic flex items-center gap-3">
-                      <Terminal size={40} className="hidden sm:block" /> {glitchText}
-                    </motion.span>
-                  )}
+                  {isHacked && <motion.span initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="text-red-600 italic flex items-center gap-3"><Terminal size={40} className="hidden sm:block" /> {glitchText}</motion.span>}
                 </AnimatePresence>
               </h1>
-              <p className={`text-sm md:text-lg italic font-medium max-w-md ${isCosbyMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                "The most important altcoin you've never heard of... until now."
-              </p>
+              <p className={`text-sm md:text-lg italic font-medium max-w-md ${isCosbyMode ? 'text-gray-400' : 'text-gray-600'}`}>"The most important altcoin you've never heard of... until now."</p>
             </div>
           </div>
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={() => setIsCosbyMode(!isCosbyMode)} 
-              className={`px-8 py-4 rounded-sm font-black text-sm uppercase tracking-widest border-2 transition-all shadow-[8px_8px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none ${
-                isCosbyMode 
-                ? 'bg-red-700 border-white text-white hover:bg-red-600' 
-                : 'bg-white border-[#2b506f] text-[#2b506f] hover:bg-gray-50'
-              }`}
-            >
-              {isCosbyMode ? "Cosby Mode: Active" : "Restore History"}
-            </button>
-            <p className="text-[10px] text-center opacity-40 font-black uppercase tracking-widest animate-pulse">Click to Hijack the Narrative</p>
-          </div>
+          <button onClick={() => setIsCosbyMode(!isCosbyMode)} className={`px-8 py-4 rounded-sm font-black text-sm uppercase tracking-widest border-2 transition-all shadow-[8px_8px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none ${isCosbyMode ? 'bg-red-700 border-white text-white hover:bg-red-600' : 'bg-white border-[#2b506f] text-[#2b506f] hover:bg-gray-50'}`}>{isCosbyMode ? "Cosby Mode: Active" : "Restore History"}</button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pb-24 mt-8">
-        {/* The Manifesto Section */}
+      <main className="max-w-6xl mx-auto px-4 pb-24 mt-8 relative z-20">
         <section className={`border-4 p-1 mb-10 shadow-xl transition-all ${isCosbyMode ? 'bg-gray-900 border-red-900/50' : 'bg-[#f6f6f6] border-[#c4c4c4]'}`}>
-          <div className="bg-[#55708b] text-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] flex justify-between items-center shadow-inner">
+          <div className="bg-[#55708b] text-white px-4 py-2 text-[11px] font-black uppercase flex justify-between items-center">
             <span>Official Status: Unauthorized Access Detected</span>
             <AlertTriangle size={16} className="text-yellow-400" />
           </div>
           <div className={`p-8 border-t-2 transition-colors ${isCosbyMode ? 'bg-black/40 border-gray-800' : 'bg-white border-[#c4c4c4]'}`}>
-            <h2 className="text-3xl md:text-5xl font-black text-[#b52a2a] mb-6 uppercase italic tracking-tighter">
-              The 2011 "Pre-Doge" Legacy
-            </h2>
+            <h2 className="text-3xl md:text-5xl font-black text-[#b52a2a] mb-6 uppercase italic">The 2011 "Pre-Doge" Legacy</h2>
             <div className={`space-y-6 text-base md:text-xl leading-relaxed font-medium ${isCosbyMode ? 'text-gray-300' : 'text-gray-800'}`}>
-              <p>Before Dogecoin ever existed, there was <strong>CosbyCoin</strong>. The first memecoin, and it wasn't even intentional.</p>
-              <p>In 2011, a Bitcointalk forum donor hijacked the entire site, replacing every instance of “Bitcoin” with “CosbyCoin” and swapping images with Bill Cosby’s face.</p>
-              <div className="relative py-6 px-10 border-l-8 border-red-600 bg-red-600/5 italic text-2xl md:text-3xl font-black text-red-700">
-                <span className="absolute top-0 left-2 text-6xl opacity-10 font-serif">"</span>
-                Bitcoin was itself turned into a meme on the site we get all of our lore from.
-              </div>
+              <p>Before Dogecoin ever existed, there was <strong>CosbyCoin</strong>. In 2011, a Bitcointalk forum donor hijacked the site, replacing “Bitcoin” with “CosbyCoin” and swapping logos with Bill Cosby’s face.</p>
+              <div className="py-6 px-10 border-l-8 border-red-600 bg-red-600/5 italic text-2xl md:text-3xl font-black text-red-700">"Bitcoin was turned into a meme on the site we get all of our lore from."</div>
             </div>
           </div>
         </section>
 
-        {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Main Forum Feed */}
           <div className="lg:col-span-2 flex flex-col h-full min-h-[700px]">
-            <h3 className={`text-2xl font-black border-b-4 pb-3 mb-6 flex items-center gap-3 italic ${isCosbyMode ? 'text-white border-white' : 'text-[#2b506f] border-[#2b506f]'}`}>
-              <MessageSquare size={28} /> Live Forum Reaction
-            </h3>
-            <div className={`flex-1 border-4 rounded-lg shadow-2xl relative overflow-hidden transition-all duration-500 ${isCosbyMode ? 'bg-gray-950 border-gray-800 ring-4 ring-red-900/20' : 'bg-white border-[#c4c4c4]'}`}>
-               <ChatApp darkMode={isCosbyMode} />
-            </div>
+            <h3 className={`text-2xl font-black border-b-4 pb-3 mb-6 flex items-center gap-3 italic ${isCosbyMode ? 'text-white border-white' : 'text-[#2b506f] border-[#2b506f]'}`}><MessageSquare size={28} /> Live Forum Reaction</h3>
+            <div className={`flex-1 border-4 rounded-lg shadow-2xl relative overflow-hidden transition-all duration-500 ${isCosbyMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-[#c4c4c4]'}`}><ChatApp darkMode={isCosbyMode} /></div>
           </div>
-
-          {/* Sidebar Section */}
           <div className="space-y-8">
-            <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#f0f4f7] border-[#c4c4c4]'}`}>
-              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase tracking-[0.2em] shadow-md italic">Evidence Vault</div>
-              <div className="p-6 space-y-6">
-                <EvidenceCard title="Terminology Index" desc="CosbyCoin remains the only altcoin ever officially listed on the Bitcointalk terminology page." link="https://bitcointalk.org/index.php?topic=2533.0" isCosbyMode={isCosbyMode} />
-                <EvidenceCard title="The IT News Report" desc="Deep dive into how a frustrated donor turned the crypto world upside down in 2011." link="https://www.itnews.com.au/news-bitcoin-forum-hijacked-by-frustrated-donor-276685" isCosbyMode={isCosbyMode} />
-                <a href="https://x.com" target="_blank" className={`flex items-center justify-center gap-3 w-full py-5 rounded font-black text-sm transition-all border-4 shadow-lg active:shadow-none active:translate-y-1 ${isCosbyMode ? 'bg-white text-black border-white hover:bg-gray-200' : 'bg-black text-white border-black hover:opacity-90'}`}>
-                  <Twitter size={20} fill="currentColor" /> JOIN THE CONVERSATION
-                </a>
+            <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#fdfdfd] border-[#c4c4c4]'}`}>
+              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic">Media Spotlight</div>
+              <div className="p-4 space-y-4">
+                {MEDIA_POSTS.map(post => (<XPostMockup key={post.id} isCosbyMode={isCosbyMode} {...post} />))}
               </div>
             </div>
-
+            <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#f0f4f7] border-[#c4c4c4]'}`}>
+              <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic">Evidence Vault</div>
+              <div className="p-6 space-y-6">
+                <EvidenceCard title="Terminology Index" desc="CosbyCoin remains the only altcoin ever officially listed on the Bitcointalk terminology page." link="https://bitcointalk.org/index.php?topic=2533.0" isCosbyMode={isCosbyMode} />
+                <EvidenceCard title="The IT News Report" desc="Deep dive into how a frustrated donor turned the crypto world upside down in 2011." link="https://www.itnews.com.au/news/bitcoin-forum-hijacked-by-frustrated-donor-276685" isCosbyMode={isCosbyMode} />
+              </div>
+            </div>
             <div className={`p-6 shadow-xl border-l-8 border-red-600 transition-colors ${isCosbyMode ? 'bg-gray-950 text-gray-400' : 'bg-white text-gray-700'}`}>
-              <h4 className="font-black flex items-center gap-2 mb-3 text-red-600 uppercase italic underline decoration-4 underline-offset-4 tracking-tighter text-xl">
-                <Zap size={22} className="fill-current"/> Historical Impact
-              </h4>
-              <p className="text-sm font-medium leading-relaxed">
-                The 2011 hack proved that narrative is more powerful than code. CosbyCoin isn't just a token; it's a historical artifact that broke the "pure" Bitcoin narrative years before memecoins were even a category.
-              </p>
+              <h4 className="font-black flex items-center gap-2 mb-3 text-red-600 uppercase italic underline decoration-4 underline-offset-4 tracking-tighter text-xl"><Zap size={22} className="fill-current"/> Historical Impact</h4>
+              <p className="text-sm font-medium leading-relaxed">The 2011 hack proved that narrative is more powerful than code. CosbyCoin is a historical artifact that broke the "pure" Bitcoin narrative years before memecoins were a category.</p>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Retro OS Popups */}
       <AnimatePresence>
         {showPopup && (
-          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
-            <div className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] p-1 shadow-[10px_10px_0px_rgba(0,0,0,0.2)] pointer-events-auto max-w-[360px] w-full">
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto p-4">
+            <div className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] p-1 shadow-2xl max-w-[360px] w-full">
               <div className="bg-[#000080] text-white flex justify-between items-center px-2 py-1 text-xs font-bold mb-1">
-                <span className="flex items-center gap-2"><Terminal size={12}/> System Alert: Protocol Swap</span>
-                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] text-black px-1.5 leading-none border border-black text-[10px] hover:bg-red-600 hover:text-white transition-colors">X</button>
+                <span className="flex items-center gap-2"><Terminal size={12}/> System Alert</span>
+                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] text-black px-1.5 leading-none border border-black hover:bg-red-600 hover:text-white transition-colors">X</button>
               </div>
               <div className="bg-white border border-[#808080] p-6 flex flex-col items-center gap-6">
-                <img src="popup.jpg" alt="Original Hack Coin" className="w-56 h-56 object-cover border-4 border-black shadow-lg" onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=History+Alert"; }} />
-                <div className="text-center">
-                  <p className="text-[14px] font-black text-black uppercase leading-tight mb-2 italic">
-                    "I have replaced your Bitcoin with history."
-                  </p>
-                  <p className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Official 2011 Forum Hijack Visual</p>
-                </div>
-                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] px-12 py-3 text-sm font-black active:border-[#808080] active:border-r-white active:border-b-white transition-all">OK</button>
+                <img src="popup.jpg" alt="Original Hack Coin" className="w-56 h-56 object-cover border-4 border-black" onError={(e) => { e.target.src = "https://via.placeholder.com/200?text=History+Alert"; }} />
+                <p className="text-[14px] font-black text-black uppercase text-center italic">"I have replaced your Bitcoin with history."</p>
+                <button onClick={() => setShowPopup(false)} className="bg-[#c0c0c0] border-2 border-white border-r-[#808080] border-b-[#808080] px-12 py-3 text-sm font-black active:border-[#808080]">OK</button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Site Footer */}
       <footer className={`text-center py-16 text-xs border-t-8 transition-colors ${isCosbyMode ? 'bg-black text-white/30 border-red-900' : 'bg-[#1a3144] text-white/50 border-[#0d1a24]'}`}>
-        <div className="max-w-4xl mx-auto px-4 space-y-4">
-          <p className="font-black uppercase tracking-[0.4em] text-sm">© 2011-2026 CosbyCoin Foundation. The Original Hijack.</p>
-          <div className="flex justify-center gap-6 opacity-40">
-             <span className="hover:opacity-100 cursor-help">EST. OCT 2011</span>
-             <span className="hover:opacity-100 cursor-help">FORUM DONOR PROTEST</span>
-             <span className="hover:opacity-100 cursor-help">ANTI-MODERATION LEGACY</span>
-          </div>
-          <p className="mt-4 italic font-medium">"History cannot be moderated. Pudding cannot be stopped."</p>
-        </div>
+        <p className="font-black uppercase tracking-[0.4em] text-sm">© 2011-2026 CosbyCoin Foundation. The Original Hijack.</p>
+        <p className="mt-4 italic font-medium">"History cannot be moderated. Pudding cannot be stopped."</p>
       </footer>
-
-      {/* CRT Scanline Effect */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.05] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
     </div>
   );
 };
 
 const EvidenceCard = ({ title, desc, link, isCosbyMode }) => (
-  <div className={`p-5 border-2 rounded shadow-sm hover:shadow-md transition-all active:scale-[0.98] ${isCosbyMode ? 'bg-black/40 border-gray-700 hover:border-red-600' : 'bg-white border-gray-200 hover:border-[#2b506f]'}`}>
-    <h5 className={`font-black text-sm flex items-center justify-between gap-2 mb-3 uppercase italic ${isCosbyMode ? 'text-red-500' : 'text-[#2b506f]'}`}>
-      {title} <ExternalLink size={16} />
-    </h5>
+  <div className={`p-5 border-2 rounded shadow-sm hover:shadow-md transition-all ${isCosbyMode ? 'bg-black/40 border-gray-700 hover:border-red-600' : 'bg-white border-gray-200 hover:border-[#2b506f]'}`}>
+    <h5 className={`font-black text-sm flex items-center justify-between gap-2 mb-3 uppercase italic ${isCosbyMode ? 'text-red-500' : 'text-[#2b506f]'}`}>{title} <ExternalLink size={16} /></h5>
     <p className={`text-[12px] mb-4 leading-relaxed font-medium ${isCosbyMode ? 'text-gray-400' : 'text-gray-600'}`}>{desc}</p>
-    <a href={link} target="_blank" rel="noopener noreferrer" className={`text-xs font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4 ${isCosbyMode ? 'text-white' : 'text-blue-700'}`}>
-      Verify the Truth →
-    </a>
+    <a href={link} target="_blank" rel="noopener noreferrer" className={`text-xs font-black uppercase tracking-widest hover:underline decoration-2 ${isCosbyMode ? 'text-white' : 'text-blue-700'}`}>Verify the Truth →</a>
   </div>
 );
 
