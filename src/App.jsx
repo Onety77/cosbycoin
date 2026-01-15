@@ -39,7 +39,14 @@ import {
   Copy,
   MessageCircle,
   Heart,
-  Share2
+  Share2,
+  ImagePlus,
+  Sparkles,
+  Upload,
+  Download,
+  ArrowLeft,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 
 // --- CONFIGURATION ---
@@ -53,6 +60,24 @@ const firebaseConfig = typeof __firebase_config !== 'undefined'
       messagingSenderId: "804328953904",
       appId: "1:804328953904:web:e760545b579bf2527075f5"
     };
+
+
+    // --- API CONFIGURATION ---
+const apiKey = (() => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_GEMINI) return import.meta.env.VITE_APP_GEMINI;
+  } catch (e) {}
+  try {
+    if (typeof process !== 'undefined' && process.env?.VITE_APP_GEMINI) return process.env.VITE_APP_GEMINI;
+  } catch (e) {}
+  try {
+    if (typeof window !== 'undefined' && window.VITE_APP_GEMINI) return window.VITE_APP_GEMINI;
+  } catch (e) {}
+  return typeof __apiKey !== 'undefined' ? __apiKey : "";
+})();
+
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
 
 const AVATAR_LIST = [
   { id: 'pepe', name: 'PEPE', url: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=pepe' },
@@ -80,6 +105,23 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
 const OFFICIAL_CA = "CAgcxv5toycxkzffkUjW1gm8ArJVnRnXv7C2m32zpump";
 
+// --- HELPERS ---
+const getBase64FromUrl = async (url) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.error("Base64 conversion failed", e);
+    return null;
+  }
+};
+
 // --- MEDIA SPOTLIGHT DATA ---
 const MEDIA_POSTS = [
   {
@@ -97,7 +139,7 @@ const MEDIA_POSTS = [
     name: 'Buttcoin',
     handle: '@buttcoin',
     avatar: 'buttcoin.jpg',
-    text: 'You learned about Bitcoin from DeFi ponzis and Matt Damon. I learned it from dog dick coffee table and CosbyCoin./br /br We are not the same.',
+    text: 'You learned about Bitcoin from DeFi ponzis and Matt Damon. I learned it from dog dick coffee table and CosbyCoin.\n\nWe are not the same.',
     image: 'photo_2026-01-15_09-48-19.jpg',
     link: 'https://x.com/ButtCoin/status/1600962725277880320?s=20',
     stats: { replies: '3.1k', retweets: '1.2k', likes: '15.9k' }
@@ -372,6 +414,128 @@ const PassingMeme = ({ src, direction }) => (
   />
 );
 
+// --- AI MEME GENERATOR COMPONENT ---
+const MemeGenerator = ({ darkMode, onBack }) => {
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [memeResult, setMemeResult] = useState(null);
+  const [uploadBase64, setUploadBase64] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setUploadBase64(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const generateMeme = async (random = false) => {
+    if (!apiKey) return setError("API Key configuration missing.");
+    setGenerating(true);
+    setError(null);
+    
+    try {
+      const templateBase64 = await getBase64FromUrl('template.jpg');
+      const backgroundBase64 = uploadBase64 ? uploadBase64.split(',')[1] : (templateBase64 || "");
+      
+      const userInstruction = random 
+        ? "Generate a hilarious random meme quote, fake fact, or historical snippet about the 2011 CosbyCoin Bitcointalk hijack. Professional quality placement."
+        : `Professionally place the following text onto this image: "${prompt}". If this is the template with a central box, place the text exactly inside that box using a font and color that matches the site's aesthetic. If this is a custom image, place the text centered and use a color that provides maximum professional contrast.`;
+
+      const response = await fetch(GEMINI_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: userInstruction },
+              { inlineData: { mimeType: "image/jpeg", data: backgroundBase64 } }
+            ]
+          }],
+          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+        })
+      });
+
+      const result = await response.json();
+      const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+      
+      if (base64) {
+        setMemeResult(`data:image/png;base64,${base64}`);
+      } else {
+        throw new Error("AI failed to return an image.");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("AI Generation failed. Retry in a moment.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col animate-fade-in ${darkMode ? 'bg-[#0f0f0f] text-white' : 'bg-gray-100 text-black'}`}>
+      <div className="p-4 border-b flex items-center justify-between bg-black text-white">
+        <button onClick={onBack} className="flex items-center gap-2 text-xs font-black uppercase hover:text-red-500 transition-colors">
+          <ArrowLeft size={16} /> Back to Forum
+        </button>
+        <span className="text-[10px] font-black tracking-widest uppercase italic">AI Meme Protocol v2.5</span>
+      </div>
+
+      <div className="flex-1 flex flex-col md:flex-row p-6 gap-8 overflow-y-auto">
+        <div className="w-full md:w-1/3 space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter text-red-600">Meme Uplink</h2>
+            <p className="text-xs opacity-60">Type your message or generate a random piece of 2011 lore.</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase opacity-40">Meme Content</label>
+            <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="ENTER MEME TEXT..." className={`w-full h-32 bg-transparent border-2 p-3 outline-none text-sm font-bold resize-none ${darkMode ? 'border-white/20 focus:border-white' : 'border-black/20 focus:border-black'}`} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase opacity-40">Custom Background (Optional)</label>
+            <div className="flex gap-2">
+              <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 border-2 border-dashed border-current p-4 hover:bg-current hover:bg-opacity-5 transition-all text-xs font-bold uppercase">
+                <Upload size={16} /> {uploadBase64 ? 'Image Loaded' : 'Upload BG'}
+                <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
+              </label>
+              {uploadBase64 && (
+                <button onClick={() => setUploadBase64(null)} className="p-4 border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all"><X size={16}/></button>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button disabled={generating || (!prompt.trim() && !uploadBase64)} onClick={() => generateMeme(false)} className="w-full py-4 bg-red-700 text-white font-black uppercase text-sm tracking-widest hover:bg-red-600 disabled:opacity-30 transition-all flex items-center justify-center gap-2">{generating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />} Execute Generation</button>
+            <button disabled={generating} onClick={() => generateMeme(true)} className="w-full py-4 border-2 border-current font-black uppercase text-sm tracking-widest hover:bg-current hover:bg-opacity-5 transition-all flex items-center justify-center gap-2"><RefreshCw size={18} className={generating ? 'animate-spin' : ''} /> Random Lore</button>
+          </div>
+          {error && <div className="p-3 bg-red-900/20 border border-red-900 text-red-500 text-[10px] font-black uppercase text-center">{error}</div>}
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center border-4 border-dashed border-current border-opacity-10 rounded-xl relative min-h-[400px]">
+          <AnimatePresence mode="wait">
+            {memeResult ? (
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full h-full flex flex-col items-center justify-center p-4 gap-4">
+                <img src={memeResult} className="max-w-full max-h-[70vh] shadow-2xl border-4 border-white" alt="Result" />
+                <a href={memeResult} download="cosbycoin_meme.png" className="px-6 py-2 bg-black text-white rounded-full text-xs font-bold flex items-center gap-2 hover:bg-red-700 transition-colors"><Download size={14} /> Download Protocol</a>
+              </motion.div>
+            ) : (
+              <div className="text-center space-y-4 opacity-20">
+                <ImagePlus size={64} className="mx-auto" />
+                <p className="text-xs font-black uppercase tracking-widest italic">Awaiting AI Uplink...</p>
+              </div>
+            )}
+          </AnimatePresence>
+          {generating && (
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white gap-4">
+              <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={48} className="fill-current text-yellow-400" /></motion.div>
+              <p className="font-mono text-xs uppercase tracking-[0.5em] animate-pulse">Calculating Defacement...</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // --- X MOCKUP COMPONENT ---
 const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats }) => (
   <a href={link || "#"} target="_blank" rel="noopener noreferrer" className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700' : 'bg-white border-gray-100 hover:border-gray-200'}`}>
@@ -401,6 +565,7 @@ const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, sta
 
 // --- MAIN APP ---
 const App = () => {
+  const [view, setView] = useState('home');
   const [isHacked, setIsHacked] = useState(false);
   const [isCosbyMode, setIsCosbyMode] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -427,15 +592,12 @@ const App = () => {
     }
   }, [isHacked]);
 
-  // Ambient Overwhelming Spawn Logic
   useEffect(() => {
-    if (!isCosbyMode) {
+    if (!isCosbyMode || view !== 'home') {
       setGhosts([]);
       setPassingMemes([]);
       return;
     }
-    
-    // Random "Ghost" Faces
     const ghostInterval = setInterval(() => {
       const id = Date.now();
       const newGhost = {
@@ -448,8 +610,6 @@ const App = () => {
       setGhosts(prev => [...prev.slice(-5), newGhost]);
       setTimeout(() => setGhosts(prev => prev.filter(g => g.id !== id)), 4000);
     }, 2500);
-
-    // Passing Background Memes
     const memeInterval = setInterval(() => {
       const id = `meme-${Date.now()}`;
       const newMeme = {
@@ -460,12 +620,8 @@ const App = () => {
       setPassingMemes(prev => [...prev.slice(-3), newMeme]);
       setTimeout(() => setPassingMemes(prev => prev.filter(m => m.id !== id)), 16000);
     }, 8000);
-
-    return () => {
-      clearInterval(ghostInterval);
-      clearInterval(memeInterval);
-    };
-  }, [isCosbyMode]);
+    return () => { clearInterval(ghostInterval); clearInterval(memeInterval); };
+  }, [isCosbyMode, view]);
 
   const copyCA = () => {
     const el = document.createElement('textarea');
@@ -478,10 +634,12 @@ const App = () => {
     setTimeout(() => setCaCopied(false), 2000);
   };
 
+  if (view === 'generator') {
+    return <MemeGenerator darkMode={isCosbyMode} onBack={() => setView('home')} />;
+  }
+
   return (
     <div className={`min-h-screen transition-colors duration-700 ${isCosbyMode ? 'bg-[#1a1b1e] text-white' : 'bg-[#e5e5e8] text-[#000000]'} font-sans antialiased overflow-x-hidden`}>
-      
-      {/* Hijack Visuals Layer */}
       <AnimatePresence>
         {isCosbyMode && (
           <>
@@ -491,24 +649,12 @@ const App = () => {
         )}
       </AnimatePresence>
 
-      {/* Official CA Glitch Banner */}
-      <div 
-        onClick={copyCA}
-        className={`sticky top-0 z-[60] w-full text-center py-2.5 transition-all cursor-pointer select-none overflow-hidden ${
-          isCosbyMode 
-          ? 'bg-red-700/90 backdrop-blur-md border-b border-white/20' 
-          : 'bg-[#2b506f] border-b border-black/20'
-        }`}
-      >
+      <div onClick={copyCA} className={`sticky top-0 z-[60] w-full text-center py-2.5 transition-all cursor-pointer select-none overflow-hidden ${isCosbyMode ? 'bg-red-700/90 backdrop-blur-md border-b border-white/20' : 'bg-[#2b506f] border-b border-black/20'}`}>
         <div className="flex items-center justify-center gap-3 font-black tracking-[0.15em] text-[10px] md:text-xs text-white">
-          <motion.div animate={isCosbyMode ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 1 }}>
-            <Zap size={14} className="fill-current text-yellow-400" />
-          </motion.div>
-          <span className="opacity-70 uppercase"> CONTRACT ADDRESS:</span>
-          <span className="font-mono">{OFFICIAL_CA}</span>
-          <span className={`bg-white/20 px-2 py-0.5 rounded text-[8px] transition-all ${caCopied ? 'bg-green-500 scale-110' : ''}`}>
-            {caCopied ? 'COPIED!' : 'TAP TO COPY'}
-          </span>
+          <motion.div animate={isCosbyMode ? { scale: [1, 1.1, 1] } : {}} transition={{ repeat: Infinity, duration: 1 }}><Zap size={14} className="fill-current text-yellow-400" /></motion.div>
+          <span className="opacity-70 uppercase">Official Protocol:</span>
+          <span className="font-mono text-xs">{OFFICIAL_CA}</span>
+          <span className={`bg-white/20 px-2 py-0.5 rounded text-[8px] transition-all ${caCopied ? 'bg-green-500 scale-110' : ''}`}>{caCopied ? 'COPIED!' : 'TAP TO COPY'}</span>
         </div>
       </div>
 
@@ -525,7 +671,6 @@ const App = () => {
         </div>
       </nav>
 
-      {/* Hero Header */}
       <header className="p-6 max-w-6xl mx-auto mt-4 relative z-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div className="flex items-center gap-6">
@@ -571,6 +716,19 @@ const App = () => {
             <div className={`flex-1 border-4 rounded-lg shadow-2xl relative overflow-hidden transition-all duration-500 ${isCosbyMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-[#c4c4c4]'}`}><ChatApp darkMode={isCosbyMode} /></div>
           </div>
           <div className="space-y-8">
+            <div onClick={() => setView('generator')} className={`group cursor-pointer border-4 rounded-sm shadow-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-95 ${isCosbyMode ? 'bg-gray-900 border-red-900' : 'bg-white border-[#2b506f]'}`}>
+              <div className="bg-red-700 text-white p-3 font-black text-xs uppercase flex items-center justify-between">
+                <span>AI Meme Generator</span>
+                <Sparkles size={14} />
+              </div>
+              <div className="relative aspect-video overflow-hidden">
+                <img src="template.jpg" alt="Meme Template" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="bg-white text-black px-4 py-2 font-black text-xs uppercase italic">Launch Protocol</span>
+                </div>
+              </div>
+              <div className="p-4 text-[10px] font-bold uppercase opacity-60">Generate professional Cosby lore using Gemini AI.</div>
+            </div>
             <div className={`border-4 rounded-sm shadow-xl overflow-hidden transition-colors ${isCosbyMode ? 'bg-gray-900 border-gray-700' : 'bg-[#fdfdfd] border-[#c4c4c4]'}`}>
               <div className="bg-[#2b506f] text-white p-4 font-black text-sm uppercase shadow-md italic">Media Spotlight</div>
               <div className="p-4 space-y-4">
