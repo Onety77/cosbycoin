@@ -406,12 +406,12 @@ const App = () => {
       <nav className="bg-[#2b506f] text-white text-[10px] py-2.5 px-4 flex flex-wrap justify-between items-center border-b border-[#1a3144] sticky top-0 z-40 shadow-lg">
         <div className="flex gap-4 sm:gap-6 font-bold uppercase tracking-wider">
           <a href="#" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><Globe size={13} /> Home</a>
-          <a href="https://web.archive.org/web/20111025203348/http://bitcointalk.org/" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><History size={13} /> Archive (2011)</a>
-          <a href="https://bitcointalk.org/index.php?topic=49253.0" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><ShieldAlert size={13} /> The Hack Thread</a>
-          <a href="https://www.itnews.com.au/news/bitcoin-forum-hijacked-by-frustrated-donor-276685" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><FileText size={13} /> News Coverage</a>
+          <a href="https://web.archive.org/web/20111025203743/http://cosbycoin.org/" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><History size={13} /> Archive (2011)</a>
+          <a href="https://bitcointalk.org/index.php?topic=126798.0Link" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><ShieldAlert size={13} /> The Hack Thread</a>
+          <a href="https://www.itnews.com.au/news/bitcoin-forum-hacked-by-donor-271688" target="_blank" className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors"><FileText size={13} /> News Coverage</a>
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
-          <a href="https://x.comhttps://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10">
+          <a href="https://twitter.com/i/communities/2011679304862580738" target="_blank" className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded hover:bg-black/60 transition-all border border-white/10">
             <Twitter size={12} fill="currentColor" /> X.COM
           </a>
           <span className="opacity-50 italic hidden lg:inline">Established Oct 25, 2011</span>
