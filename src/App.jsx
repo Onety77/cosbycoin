@@ -118,7 +118,6 @@ const getBase64FromUrl = async (url) => {
   }
 };
 
-// --- MEDIA SPOTLIGHT DATA ---
 const MEDIA_POSTS = [
   {
     id: 'tweet-buttcoin-1',
@@ -126,8 +125,8 @@ const MEDIA_POSTS = [
     handle: '@buttcoin',
     avatar: 'buttcoin.jpg',
     text: 'Dear @EdandEthan, have you considered Buttcoin or perhaps Cosbycoin? cc @DreamHostBrett',
-    image: 'photo_2026-01-15_09-33-29.jpg',
-    link: 'https://x.com/buttcoin',
+    image: null, // No image for this post
+    link: 'https://x.com/ButtCoin/status/373311166220492800?s=20',
     stats: { replies: '8.2k', retweets: '4.1k', likes: '22.4k' }
   },
   {
@@ -136,11 +135,81 @@ const MEDIA_POSTS = [
     handle: '@buttcoin',
     avatar: 'buttcoin.jpg',
     text: 'You learned about Bitcoin from DeFi ponzis and Matt Damon. I learned it from dog dick coffee table and CosbyCoin.\n\nWe are not the same.',
-    image: 'photo_2026-01-15_09-48-19.jpg',
+    image: null, // No image for this post
     link: 'https://x.com/ButtCoin/status/1600962725277880320?s=20',
     stats: { replies: '3.1k', retweets: '1.2k', likes: '15.9k' }
+  },
+  {
+    id: 'tweet-buttcoin-article-1',
+    name: 'Buttcoin',
+    handle: '@buttcoin',
+    avatar: 'buttcoin.jpg',
+    text: 'The definitive breakdown of the 2011 Bitcointalk hijack. How the Cosby Protocol changed everything.',
+    image: 'buttstatus.jpg', // User provided image name
+    link: 'https://x.com/buttcoin/status/2013267578005991478',
+    isArticle: true,
+    stats: { replies: '15.4k', retweets: '6.2k', likes: '42.1k' }
   }
 ];
+
+// --- UPDATED X MOCKUP COMPONENT ---
+const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats, isArticle }) => (
+  <a 
+    href={link || "#"} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${
+      isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700' : 'bg-white border-gray-100 hover:border-gray-200'
+    }`}
+  >
+    {/* Header */}
+    <div className="flex items-center gap-3 mb-3">
+      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex-shrink-0">
+        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex flex-col overflow-hidden">
+        <div className="flex items-center gap-1">
+          <span className={`font-bold text-sm truncate ${isCosbyMode ? 'text-white' : 'text-black'}`}>{name}</span>
+          <div className="w-3.5 h-3.5 bg-[#1d9bf0] rounded-full flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current">
+              <path d="M22.25 12c0-5.66-4.59-10.25-10.25-10.25S1.75 6.34 1.75 12c0 5.66 4.59 10.25 10.25 10.25S22.25 17.66 22.25 12zM10.5 17l-5-5 1.41-1.41L10.5 14.17l7.09-7.09L19 8.5 10.5 17z"/>
+            </svg>
+          </div>
+        </div>
+        <span className="text-gray-500 text-xs truncate">{handle}</span>
+      </div>
+      <div className="ml-auto flex-shrink-0">
+        <Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} />
+      </div>
+    </div>
+    
+    {/* Image (Now on top of text) */}
+    {image && (
+      <div className="rounded-2xl border border-gray-200 overflow-hidden mb-3">
+        <img src={image} alt="Tweet Content" className="w-full h-auto object-cover" />
+      </div>
+    )}
+
+    {/* Text */}
+    <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>
+      {text}
+    </p>
+
+    {/* Specialized Article Button */}
+    {isArticle && (
+      <div className="mb-3 bg-[#1d9bf0] text-white text-center py-2 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-[#1a8cd8] transition-all shadow-md active:scale-95">
+        Read Article Here
+      </div>
+    )}
+
+    {/* Footer Stats */}
+    <div className="flex items-center justify-between text-gray-500 px-1">
+      <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
+      <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
+      <div className="flex items-center gap-1.5"><Heart size={14} /> <span className="text-[11px]">{stats?.likes || '0'}</span></div>
+    </div>
+  </a>
+);
 
 // --- CHAT COMPONENT ---
 const ChatApp = ({ darkMode }) => {
@@ -611,33 +680,6 @@ const promptPayload = `Perform a Template Injection:
     </div>
   );
 };
-
-// --- X MOCKUP COMPONENT ---
-const XPostMockup = ({ isCosbyMode, avatar, name, handle, text, image, link, stats }) => (
-  <a href={link || "#"} target="_blank" rel="noopener noreferrer" className={`block rounded-xl border p-4 mb-4 transition-all hover:shadow-lg outline-none ${isCosbyMode ? 'bg-[#000000] border-gray-800 hover:border-gray-700 text-left' : 'bg-white border-gray-100 hover:border-gray-200 text-left'}`}>
-    <div className="flex items-center gap-3 mb-3">
-      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex-shrink-0">
-        <img src={avatar} alt={name} className="w-full h-full object-cover" />
-      </div>
-      <div className="flex flex-col overflow-hidden">
-        <div className="flex items-center gap-1">
-          <span className={`font-bold text-sm truncate ${isCosbyMode ? 'text-white' : 'text-black'}`}>{name}</span>
-          <div className="w-3.5 h-3.5 bg-[#1d9bf0] rounded-full flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white fill-current"><path d="M22.25 12c0-5.66-4.59-10.25-10.25-10.25S1.75 6.34 1.75 12c0 5.66 4.59 10.25 10.25 10.25S22.25 17.66 22.25 12zM10.5 17l-5-5 1.41-1.41L10.5 14.17l7.09-7.09L19 8.5 10.5 17z"/></svg>
-          </div>
-        </div>
-        <span className="text-gray-500 text-xs truncate">{handle}</span>
-      </div>
-      <div className="ml-auto flex-shrink-0"><Twitter size={16} className={isCosbyMode ? 'text-white' : 'text-black'} /></div>
-    </div>
-    <p className={`text-[13px] mb-3 leading-tight ${isCosbyMode ? 'text-gray-200' : 'text-gray-800'}`}>{text}</p>
-    <div className="flex items-center justify-between text-gray-500 px-1">
-      <div className="flex items-center gap-1.5"><MessageCircle size={14} /> <span className="text-[11px]">{stats?.replies || '0'}</span></div>
-      <div className="flex items-center gap-1.5"><Share2 size={14} /> <span className="text-[11px]">{stats?.retweets || '0'}</span></div>
-      <div className="flex items-center gap-1.5"><Heart size={14} /> <span className="text-[11px]">{stats?.likes || '0'}</span></div>
-    </div>
-  </a>
-);
 
 // --- MAIN APP ---
 const App = () => {
