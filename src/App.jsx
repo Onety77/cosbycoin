@@ -526,7 +526,7 @@ const promptPayload = `Perform a Template Injection:
 
       const fetchWithRetry = async (retries = 5, delay = 1000) => {
         // FIXED: URL Re-constructed inside the scope to pick up environmental apiKey
-        const dynamicGeminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+        const dynamicGeminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
 
         const response = await fetch(dynamicGeminiUrl, {
           method: 'POST',
