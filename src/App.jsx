@@ -516,8 +516,8 @@ const MemeGenerator = ({ darkMode, onBack }) => {
 
 const promptPayload = `Perform a Template Injection:
 1. Reference Image 2 as your rigid base canvas.
-2. If Image 1 (User Input) is provided, intelligently crop it and place it into the central 'content' area of Image 2. 
-3. If Image 1 is not provided, keep Image 2 as is.
+2. If Image 1 (User Input) is provided, intelligently crop it and place it into the central 'content' area of Image 2, make it act as a background.
+3. If Image 1 is not provided, keep Image 2 as it is.
 4. Process the text: ${userInstruction}
 5. Text Placement: Overlay the text on top of the 'content' area (Image 1). 
 6. Stylization: Ensure the text remains perfectly readable. Use a 'textbox' effect or drop shadow if necessary to separate the text from the user background.
